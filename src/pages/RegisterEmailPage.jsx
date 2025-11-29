@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 import TextField from '../components/TextField'
 import PublicHeader from '../components/PublicHeader'
 
 const RegisterEmailPage = () => {
   const navigate = useNavigate()
+  const { registerUser } = useAuth()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -75,12 +77,23 @@ const RegisterEmailPage = () => {
 
     setLoading(true)
     try {
-      // Here you would typically send the data to your backend
-      // For now, we'll just navigate to OTP verification
-      console.log('Registration data:', formData)
-      navigate('/otp-verify')
+      // Register the user
+      registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      })
+      
+      // Navigate directly to login page after successful registration
+      navigate('/login', { 
+        state: { 
+          message: 'Registration successful! Please login with your credentials.' 
+        } 
+      })
     } catch (error) {
-      console.error('Registration error:', error)
+      setErrors({ 
+        email: error.message || 'Registration failed. Please try again.' 
+      })
     } finally {
       setLoading(false)
     }

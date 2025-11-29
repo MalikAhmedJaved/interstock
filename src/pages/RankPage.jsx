@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Trophy, Medal, Award } from 'lucide-react'
 
 const RankPage = () => {
-  const [activeTab, setActiveTab] = useState('global')
+  const [activeTab, setActiveTab] = useState('fa22')
 
-  const tabs = ['Global', 'Class 1', 'Class 2']
+  const tabs = ['FA22']
 
+  // Participants sorted by highest rating first
   const participants = [
     { rank: 1, name: 'Jawad', rating: 95, isYou: false },
     { rank: 2, name: 'Maha', rating: 92, isYou: false },
@@ -13,6 +14,9 @@ const RankPage = () => {
     { rank: 4, name: 'Ayesha', rating: 85, isYou: false },
     { rank: 5, name: 'Badar', rating: 82, isYou: false },
   ]
+
+  // Get top 3 for podium (sorted by rating)
+  const topThree = participants.slice(0, 3)
 
   const getRankIcon = (rank) => {
     if (rank === 1) return <Trophy className="text-yellow-500" size={32} />
@@ -32,7 +36,7 @@ const RankPage = () => {
             key={tab}
             onClick={() => setActiveTab(tab.toLowerCase().replace(' ', ''))}
             className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-              activeTab === tab.toLowerCase().replace(' ', '')
+              activeTab === tab.toLowerCase().replace(' ', '') || activeTab === 'fa22'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-text-secondary-light hover:text-text-primary-dark'
             }`}
@@ -44,31 +48,34 @@ const RankPage = () => {
 
       {/* Podium */}
       <div className="flex items-end justify-center gap-4 mb-6">
+        {/* 2nd Place */}
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 rounded-full bg-gray-200 mb-2 flex items-center justify-center">
             {getRankIcon(2)}
           </div>
           <div className="bg-gray-100 rounded-t-xl p-4 w-20 text-center">
-            <p className="font-semibold">Maha</p>
-            <p className="text-sm text-text-secondary-light">92</p>
+            <p className="font-semibold">{topThree[1]?.name || 'Maha'}</p>
+            <p className="text-sm text-text-secondary-light">{topThree[1]?.rating || 92}</p>
           </div>
         </div>
+        {/* 1st Place */}
         <div className="flex flex-col items-center">
           <div className="w-20 h-20 rounded-full bg-primary/20 mb-2 flex items-center justify-center border-2 border-primary">
             {getRankIcon(1)}
           </div>
           <div className="bg-primary rounded-t-xl p-4 w-24 text-center text-white">
-            <p className="font-semibold">Jawad</p>
-            <p className="text-sm">95</p>
+            <p className="font-semibold">{topThree[0]?.name || 'Jawad'}</p>
+            <p className="text-sm">{topThree[0]?.rating || 95}</p>
           </div>
         </div>
+        {/* 3rd Place */}
         <div className="flex flex-col items-center">
           <div className="w-16 h-16 rounded-full bg-gray-200 mb-2 flex items-center justify-center">
             {getRankIcon(3)}
           </div>
           <div className="bg-gray-100 rounded-t-xl p-4 w-20 text-center">
-            <p className="font-semibold">Ayesha</p>
-            <p className="text-sm text-text-secondary-light">85</p>
+            <p className="font-semibold">{topThree[2]?.name || 'You'}</p>
+            <p className="text-sm text-text-secondary-light">{topThree[2]?.rating || 88}</p>
           </div>
         </div>
       </div>

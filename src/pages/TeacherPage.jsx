@@ -5,8 +5,8 @@ const TeacherPage = () => {
   const navigate = useNavigate()
 
   const teachers = [
-    { id: 1, name: 'Dr. John Smith', subject: 'Finance', rating: 4.9 },
-    { id: 2, name: 'Prof. Jane Doe', subject: 'Trading', rating: 4.8 },
+    { id: 1, name: 'Dr. Khalid Iqbal', subject: 'Finance', rating: 4.9 },
+    { id: 2, name: 'Prof. Ehsanullah Munir', subject: 'Trading', rating: 4.8 },
   ]
 
   return (

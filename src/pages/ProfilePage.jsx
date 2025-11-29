@@ -1,13 +1,51 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Bell, User, Lock, FileText, Shield, FileCheck, HelpCircle, 
-  MessageCircle, Trash2, ChevronRight 
+  MessageCircle, Trash2, ChevronRight, Upload, Camera, CheckCircle
 } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 const ProfilePage = () => {
   const navigate = useNavigate()
-  const { logout } = useApp()
+  const { logout, user, deactivateAccount, activateAccount } = useAuth()
+  const [profileImage, setProfileImage] = useState(null)
+  const userName = user?.name || 'User'
+  const userEmail = user?.email || ''
+  const isActive = user?.isActive !== false // Default to true if not set
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfileImage(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleDeactivate = () => {
+    if (window.confirm('Are you sure you want to deactivate your account? All your assignments, quizzes, and other data will be hidden.')) {
+      try {
+        deactivateAccount()
+        alert('Account deactivated successfully. Your data has been hidden.')
+      } catch (error) {
+        alert('Failed to deactivate account. Please try again.')
+      }
+    }
+  }
+
+  const handleActivate = () => {
+    if (window.confirm('Are you sure you want to activate your account? All your assignments, quizzes, and other data will be restored.')) {
+      try {
+        activateAccount()
+        alert('Account activated successfully. Your data has been restored.')
+      } catch (error) {
+        alert('Failed to activate account. Please try again.')
+      }
+    }
+  }
 
   const profileItems = [
     { icon: Bell, title: 'Notification', onClick: () => navigate('/notifications') },
@@ -19,7 +57,13 @@ const ProfilePage = () => {
     { icon: HelpCircle, title: 'Help Center', onClick: () => navigate('/help-center') },
     { icon: MessageCircle, title: 'FAQs', onClick: () => navigate('/faqs-page') },
     { icon: MessageCircle, title: 'Contact Us', onClick: () => navigate('/contact-form') },
-    { icon: Trash2, title: 'Deactivate My Account', onClick: () => alert('Deactivate account?'), isDanger: true },
+    { 
+      icon: isActive ? Trash2 : CheckCircle, 
+      title: isActive ? 'Deactivate My Account' : 'Activate Account', 
+      onClick: isActive ? handleDeactivate : handleActivate, 
+      isDanger: isActive,
+      isSuccess: !isActive
+    },
   ]
 
   return (
@@ -29,15 +73,31 @@ const ProfilePage = () => {
       {/* Profile Header */}
       <div className="flex flex-col items-center">
         <div className="relative mb-4">
-          <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-primary/20">
-            <User size={48} className="text-gray-400" />
-          </div>
-          <button className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
-            <User size={16} />
-          </button>
+          <label className="cursor-pointer block">
+            <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20 hover:border-primary/40 transition-colors">
+              {profileImage ? (
+                <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={48} className="text-gray-400" />
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+              id="profile-image-input"
+            />
+          </label>
+          <label 
+            htmlFor="profile-image-input"
+            className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
+          >
+            <Camera size={16} />
+          </label>
         </div>
-        <h3 className="text-xl font-semibold">Ishmal Fatima</h3>
-        <p className="text-text-secondary-light">Ishmalfatima@gmail.com</p>
+        <h3 className="text-xl font-semibold">{userName}</h3>
+        <p className="text-text-secondary-light">{userEmail}</p>
       </div>
 
       {/* Profile Items */}
@@ -49,7 +109,7 @@ const ProfilePage = () => {
               key={index}
               onClick={item.onClick}
               className={`w-full card p-4 flex items-center justify-between hover:shadow-md transition-shadow ${
-                item.isDanger ? 'text-error' : ''
+                item.isDanger ? 'text-error' : item.isSuccess ? 'text-green-600' : ''
               }`}
             >
               <div className="flex items-center gap-4">
@@ -64,7 +124,10 @@ const ProfilePage = () => {
 
       {/* Logout Button */}
       <button
-        onClick={logout}
+        onClick={() => {
+          logout()
+          navigate('/login')
+        }}
         className="w-full py-3 rounded-xl border-2 border-error text-error font-semibold hover:bg-error/10 transition-colors"
       >
         Logout

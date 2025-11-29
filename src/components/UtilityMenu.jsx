@@ -5,11 +5,11 @@ import {
   StickyNote, GraduationCap, UserCheck, ShoppingBag 
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 const UtilityMenu = () => {
   const navigate = useNavigate()
-  const { logout } = useApp()
+  const { logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -30,8 +30,6 @@ const UtilityMenu = () => {
   }, [isOpen])
 
   const menuItems = [
-    { icon: User, label: 'Profile', onClick: () => navigate('/profile') },
-    { icon: Settings, label: 'Settings', onClick: () => navigate('/edit-profile') },
     { icon: FileText, label: 'Assignments', onClick: () => navigate('/upcoming-tasks?tab=assignments') },
     { icon: BookOpen, label: 'Quizzes', onClick: () => navigate('/upcoming-tasks?tab=quizzes') },
     { icon: Trophy, label: 'Achievements', onClick: () => navigate('/achievements') },
@@ -42,8 +40,15 @@ const UtilityMenu = () => {
     { icon: GraduationCap, label: 'Study Material', onClick: () => navigate('/study-materials') },
     { icon: UserCheck, label: 'Teachers', onClick: () => navigate('/teachers-page') },
     { icon: ShoppingBag, label: 'Purchase History', onClick: () => navigate('/purchase-history') },
-    { icon: HelpCircle, label: 'Help', onClick: () => navigate('/help-center') },
-    { icon: LogOut, label: 'Logout', onClick: logout, isDanger: true },
+    { 
+      icon: LogOut, 
+      label: 'Logout', 
+      onClick: () => {
+        logout()
+        navigate('/login')
+      }, 
+      isDanger: true 
+    },
   ]
 
   return (

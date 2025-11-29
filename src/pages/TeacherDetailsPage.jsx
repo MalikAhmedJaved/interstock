@@ -20,7 +20,7 @@ const TeacherDetailsPage = () => {
             <User size={40} className="text-gray-400" />
           </div>
           <div>
-            <h3 className="text-2xl font-semibold">Dr. John Smith</h3>
+            <h3 className="text-2xl font-semibold">Dr. Khalid Iqbal</h3>
             <div className="flex items-center gap-2 mt-1">
               <Star className="text-yellow-500" size={16} />
               <span className="font-semibold">4.9</span>

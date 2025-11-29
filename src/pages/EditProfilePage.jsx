@@ -1,17 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { User, Upload } from 'lucide-react'
 import Button from '../components/Button'
 import TextField from '../components/TextField'
 
 const EditProfilePage = () => {
   const navigate = useNavigate()
+  const { user, updateProfile } = useAuth()
   const [formData, setFormData] = useState({
-    name: 'Julia Garner',
-    email: 'julia.garner@example.com',
-    phone: '+1 234 567 8900',
+    name: '',
+    email: '',
+    phone: '',
   })
   const [image, setImage] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  // Load current user data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      })
+    }
+  }, [user])
 
   const handleChange = (e) => {
     setFormData({
@@ -31,10 +45,22 @@ const EditProfilePage = () => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Save profile
-    navigate('/profile')
+    setLoading(true)
+    try {
+      await updateProfile({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+      })
+      navigate('/profile')
+    } catch (error) {
+      alert('Failed to update profile. Please try again.')
+      console.error('Profile update error:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -95,8 +121,8 @@ const EditProfilePage = () => {
           onChange={handleChange}
         />
 
-        <Button type="submit" className="w-full">
-          Save Changes
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Updating...' : 'Update'}
         </Button>
       </form>
     </div>

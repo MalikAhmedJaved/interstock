@@ -1,31 +1,75 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 import TextField from '../components/TextField'
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate()
+  const { changePassword } = useAuth()
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   })
+  const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     })
+    // Clear error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors({
+        ...errors,
+        [e.target.name]: '',
+      })
+    }
   }
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.currentPassword) {
+      newErrors.currentPassword = 'Current password is required'
+    }
+
+    if (!formData.newPassword) {
+      newErrors.newPassword = 'New password is required'
+    } else if (formData.newPassword.length < 8) {
+      newErrors.newPassword = 'Password must be at least 8 characters'
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your new password'
+    } else if (formData.newPassword !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (formData.newPassword === formData.confirmPassword) {
-      // Change password
-      alert('Password changed successfully')
+    
+    if (!validateForm()) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      await changePassword(formData.currentPassword, formData.newPassword)
+      alert('Password changed successfully!')
       navigate('/profile')
-    } else {
-      alert('Passwords do not match')
+    } catch (error) {
+      setErrors({
+        currentPassword: error.message || 'Failed to change password. Please try again.'
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -43,8 +87,10 @@ const ChangePasswordPage = () => {
           label="Current Password"
           name="currentPassword"
           type="password"
+          placeholder="Enter your current password"
           value={formData.currentPassword}
           onChange={handleChange}
+          error={errors.currentPassword}
           required
         />
 
@@ -52,8 +98,10 @@ const ChangePasswordPage = () => {
           label="New Password"
           name="newPassword"
           type="password"
+          placeholder="Enter your new password"
           value={formData.newPassword}
           onChange={handleChange}
+          error={errors.newPassword}
           required
         />
 
@@ -61,13 +109,15 @@ const ChangePasswordPage = () => {
           label="Confirm New Password"
           name="confirmPassword"
           type="password"
+          placeholder="Confirm your new password"
           value={formData.confirmPassword}
           onChange={handleChange}
+          error={errors.confirmPassword}
           required
         />
 
-        <Button type="submit" className="w-full">
-          Change Password
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Changing Password...' : 'Change Password'}
         </Button>
       </form>
     </div>

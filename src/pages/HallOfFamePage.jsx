@@ -1,10 +1,11 @@
 import { Trophy, Medal, Award } from 'lucide-react'
 
 const HallOfFamePage = () => {
+  // Top performers from Rank Page (top 3 scorers)
   const topPerformers = [
-    { rank: 1, name: 'John Doe', score: 95, icon: Trophy },
-    { rank: 2, name: 'Jane Smith', score: 92, icon: Medal },
-    { rank: 3, name: 'Alice Johnson', score: 88, icon: Award },
+    { rank: 1, name: 'Jawad', score: 95, icon: Trophy },
+    { rank: 2, name: 'Maha', score: 92, icon: Medal },
+    { rank: 3, name: 'You', score: 88, icon: Award },
   ]
 
   return (

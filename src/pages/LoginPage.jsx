@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 import TextField from '../components/TextField'
@@ -7,28 +7,45 @@ import PublicHeader from '../components/PublicHeader'
 
 const LoginPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+
+  useEffect(() => {
+    // Check if redirected from registration
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message)
+      // Clear the message from location state
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     })
+    // Clear error when user starts typing
+    if (error) {
+      setError('')
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
     try {
       await login(formData.email, formData.password)
       navigate('/home')
     } catch (error) {
-      console.error('Login error:', error)
+      setError(error.message || 'Invalid email or password. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -48,6 +65,17 @@ const LoginPage = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {successMessage && (
+            <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg text-sm">
+              {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+          
           <TextField
             label="Email"
             name="email"
@@ -114,19 +142,6 @@ const LoginPage = () => {
                 />
               </svg>
               <span>Sign in with Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                // Handle Apple sign in
-                console.log('Apple sign in')
-              }}
-              className="w-full px-6 py-3 rounded-[30px] font-medium transition-all duration-200 bg-black text-white hover:bg-gray-900 shadow-sm hover:shadow-md flex items-center justify-center gap-3"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-              </svg>
-              <span>Sign in with Apple</span>
             </button>
           </div>
         </div>

@@ -1,13 +1,15 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Trophy, CheckCircle, XCircle } from 'lucide-react'
-import Button from '../components/Button'
 
 const ViewResultPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const score = 85
-  const totalQuestions = 10
-  const percentage = (score / totalQuestions) * 100
+  // Get score from location state, or use defaults if not provided
+  const score = location.state?.score ?? 0
+  const totalQuestions = location.state?.totalQuestions ?? 1
+  const percentage = totalQuestions > 0 ? Math.round((score / totalQuestions) * 100) : 0
+  const incorrect = totalQuestions - score
 
   return (
     <div className="px-6 py-6 space-y-6">
@@ -28,7 +30,12 @@ const ViewResultPage = () => {
         <div>
           <h3 className="text-3xl font-bold mb-2">{score}/{totalQuestions}</h3>
           <p className="text-2xl font-semibold text-primary mb-1">{percentage}%</p>
-          <p className="text-text-secondary-light">Great job!</p>
+          <p className="text-text-secondary-light">
+            {percentage === 100 ? 'Perfect score!' : percentage >= 70 ? 'Great job!' : percentage >= 50 ? 'Good try!' : 'Keep practicing!'}
+          </p>
+          {location.state?.timeUp && (
+            <p className="text-sm text-orange-600 mt-2">Time ran out</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -46,15 +53,6 @@ const ViewResultPage = () => {
             <p className="text-2xl font-bold">{totalQuestions - score}</p>
             <p className="text-sm text-text-secondary-light">Incorrect</p>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <Button className="w-full" onClick={() => navigate('/view-answer')}>
-            View Answers
-          </Button>
-          <Button variant="secondary" className="w-full" onClick={() => navigate('/quiz-home')}>
-            Back to Quizzes
-          </Button>
         </div>
       </div>
     </div>

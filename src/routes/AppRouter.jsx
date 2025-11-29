@@ -23,6 +23,7 @@ import ProfilePage from '../pages/ProfilePage'
 // Quiz Pages
 import QuizHomePage from '../pages/QuizHomePage'
 import QuizDetailsPage from '../pages/QuizDetailsPage'
+import QuizDetailPage from '../pages/QuizDetailPage'
 import McqPage from '../pages/McqPage'
 import ViewResultPage from '../pages/ViewResultPage'
 import ViewAnswerPage from '../pages/ViewAnswerPage'
@@ -44,6 +45,7 @@ import AchievementsPage from '../pages/AchievementsPage'
 import AchievementDetailsPage from '../pages/AchievementDetailsPage'
 import AssignmentsPage from '../pages/AssignmentsPage'
 import SubmitAssignmentsPage from '../pages/SubmitAssignmentsPage'
+import AssignmentDetailPage from '../pages/AssignmentDetailPage'
 import UpcomingTasksPage from '../pages/UpcomingTasksPage'
 import ChatRoomsPage from '../pages/ChatRoomsPage'
 import ChatRoomDetailsPage from '../pages/ChatRoomDetailsPage'
@@ -108,6 +110,7 @@ const AppRouter = () => {
       {/* Quiz Routes */}
       <Route path="/quiz-home" element={<QuizHomePage />} />
       <Route path="/quiz-details/:isCompleted" element={<QuizDetailsPage />} />
+      <Route path="/quiz/:id" element={<QuizDetailPage />} />
       <Route path="/mcq-page" element={<McqPage />} />
       <Route path="/view-result" element={<ViewResultPage />} />
       <Route path="/view-answer" element={<ViewAnswerPage />} />
@@ -129,6 +132,7 @@ const AppRouter = () => {
       <Route path="/achievement-details" element={<AchievementDetailsPage />} />
       <Route path="/assignments" element={<AssignmentsPage />} />
       <Route path="/submit-assignments" element={<SubmitAssignmentsPage />} />
+      <Route path="/assignment/:id" element={<AssignmentDetailPage />} />
       <Route path="/upcoming-tasks" element={<UpcomingTasksPage />} />
       <Route path="/chat-room" element={<ChatRoomsPage />} />
       <Route path="/chat-room-details" element={<ChatRoomDetailsPage />} />

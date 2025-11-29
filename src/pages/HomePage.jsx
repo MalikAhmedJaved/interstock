@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 import PortfolioOverview from '../components/PortfolioOverview'
 import StockCard from '../components/StockCard'
@@ -8,6 +9,8 @@ import UtilityMenu from '../components/UtilityMenu'
 
 const HomePage = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const userName = user?.name || 'User'
 
   const trendingStocks = [
     { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, change: 2.5, isPositive: true },
@@ -20,7 +23,7 @@ const HomePage = () => {
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Hi, Ishmal Fatima 👋</h2>
+          <h2 className="text-lg font-semibold">Hi, {userName} 👋</h2>
           <p className="text-sm text-text-secondary-light">Welcome to InterStock!</p>
         </div>
         <div className="flex gap-3">
