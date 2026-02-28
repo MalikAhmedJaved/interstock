@@ -132,7 +132,7 @@ const NewNotesPage = () => {
   // If editing, show form
   if (isViewingNote && isEditing) {
     return (
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate('/my-note-details', { state: { note: existingNote } })} className="text-text-primary-dark">
             ← Back
@@ -179,7 +179,7 @@ const NewNotesPage = () => {
   // If viewing an existing note, show details
   if (isViewingNote) {
     return (
-      <div className="px-6 py-6 space-y-6 pb-24">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="text-text-primary-dark">
             ← Back
@@ -199,7 +199,7 @@ const NewNotesPage = () => {
                   <p className="text-sm text-text-secondary-light">{existingNote.date}</p>
                   {existingNote.username && (
                     <p className="text-sm text-primary mt-1 font-medium">
-                      Uploaded by {existingNote.username}
+                      Uploaded by {existingNote.username === user?.name ? 'You' : existingNote.username}
                     </p>
                   )}
                 </div>
@@ -286,7 +286,7 @@ const NewNotesPage = () => {
 
   // Otherwise, show form to create new note
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back

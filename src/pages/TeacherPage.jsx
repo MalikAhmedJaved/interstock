@@ -10,7 +10,7 @@ const TeacherPage = () => {
   ]
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back
@@ -22,7 +22,7 @@ const TeacherPage = () => {
         {teachers.map((teacher) => (
           <div
             key={teacher.id}
-            onClick={() => navigate('/teacher-details')}
+            onClick={() => navigate('/teacher-details', { state: { teacher } })}
             className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-4">

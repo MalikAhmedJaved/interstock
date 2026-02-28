@@ -3,20 +3,14 @@ import { useApp } from '../context/AppContext'
 import MainLayout from '../components/MainLayout'
 
 // Auth Pages
-import SplashPage from '../pages/SplashPage'
 import OnboardingPage from '../pages/OnboardingPage'
 import LoginPage from '../pages/LoginPage'
 import RegisterEmailPage from '../pages/RegisterEmailPage'
-import OtpVerifyPage from '../pages/OtpVerifyPage'
 import CreatePasswordPage from '../pages/CreatePasswordPage'
-import SelectSchoolPage from '../pages/SelectSchoolPage'
-import SelectGoalPage from '../pages/SelectGoalPage'
-import UploadPicturePage from '../pages/UploadPicturePage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 
 // Main Pages
 import HomePage from '../pages/HomePage'
-import LearnPage from '../pages/LearnPage'
 import RankPage from '../pages/RankPage'
 import ProfilePage from '../pages/ProfilePage'
 
@@ -49,20 +43,9 @@ import AssignmentDetailPage from '../pages/AssignmentDetailPage'
 import UpcomingTasksPage from '../pages/UpcomingTasksPage'
 import ChatRoomsPage from '../pages/ChatRoomsPage'
 import ChatRoomDetailsPage from '../pages/ChatRoomDetailsPage'
-import CommunityPostsPage from '../pages/CommunityPostsPage'
-import NewPostPage from '../pages/NewPostPage'
-import CompetitionsPage from '../pages/CompetitionsPage'
-import CompetitionDetailsPage from '../pages/CompetitionDetailsPage'
 import ConversationsPage from '../pages/ConversationsPage'
-import NewGroupPage from '../pages/NewGroupPage'
-import EventCalendarPage from '../pages/EventCalendarPage'
-import EventDetailsPage from '../pages/EventDetailsPage'
+import NewChatPage from '../pages/NewChatPage'
 import HallOfFamePage from '../pages/HallOfFamePage'
-import AcademicNotesPage from '../pages/AcademicNotesPage'
-import AcademicNotesDetailsPage from '../pages/AcademicNotesDetailsPage'
-import AddNewAcademicNotePage from '../pages/AddNewAcademicNotePage'
-import SchoolPage from '../pages/SchoolPage'
-import SchoolDetailsPage from '../pages/SchoolDetailsPage'
 import StudyMaterialsPage from '../pages/StudyMaterialsPage'
 import TeacherPage from '../pages/TeacherPage'
 import TeacherDetailsPage from '../pages/TeacherDetailsPage'
@@ -76,9 +59,12 @@ import StockDetailsPage from '../pages/StockDetailsPage'
 import BuySellStockPage from '../pages/BuySellStockPage'
 import OrderConfirmedPage from '../pages/OrderConfirmedPage'
 import PurchaseHistoryPage from '../pages/PurchaseHistoryPage'
-import PlaceBidPage from '../pages/PlaceBidPage'
+import ListingPage from '../pages/ListingPage'
+// ListingPage is now used as the Learn page
 import FuturesDetailsPage from '../pages/FuturesDetailsPage'
-import BuyFuturePage from '../pages/BuyFuturePage'
+import FuturesOrderPage from '../pages/FuturesOrderPage'
+import OptionsDetailsPage from '../pages/OptionsDetailsPage'
+
 
 const AppRouter = () => {
   const { isAuthenticated, loading } = useApp()
@@ -90,20 +76,17 @@ const AppRouter = () => {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<SplashPage />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register-email" element={<RegisterEmailPage />} />
-      <Route path="/otp-verify" element={<OtpVerifyPage />} />
       <Route path="/create-password" element={<CreatePasswordPage />} />
-      <Route path="/select-school" element={<SelectSchoolPage />} />
-      <Route path="/select-goal" element={<SelectGoalPage />} />
-      <Route path="/upload-picture" element={<UploadPicturePage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Protected Routes with Main Layout */}
       <Route path="/home" element={<MainLayout><HomePage /></MainLayout>} />
-      <Route path="/learn" element={<MainLayout><LearnPage /></MainLayout>} />
+      <Route path="/learn" element={<ListingPage />} />
+      <Route path="/listing" element={<ListingPage />} />
       <Route path="/rank" element={<MainLayout><RankPage /></MainLayout>} />
       <Route path="/profile" element={<MainLayout><ProfilePage /></MainLayout>} />
 
@@ -136,20 +119,9 @@ const AppRouter = () => {
       <Route path="/upcoming-tasks" element={<UpcomingTasksPage />} />
       <Route path="/chat-room" element={<ChatRoomsPage />} />
       <Route path="/chat-room-details" element={<ChatRoomDetailsPage />} />
-      <Route path="/community-posts" element={<CommunityPostsPage />} />
-      <Route path="/new-post" element={<NewPostPage />} />
-      <Route path="/competitions" element={<CompetitionsPage />} />
-      <Route path="/competition-details" element={<CompetitionDetailsPage />} />
       <Route path="/conversations" element={<ConversationsPage />} />
-      <Route path="/new-group-page" element={<NewGroupPage />} />
-      <Route path="/event-calendar" element={<EventCalendarPage />} />
-      <Route path="/event-details" element={<EventDetailsPage />} />
+      <Route path="/new-chat-page" element={<NewChatPage />} />
       <Route path="/hall-of-fame" element={<HallOfFamePage />} />
-      <Route path="/academic-notes" element={<AcademicNotesPage />} />
-      <Route path="/academic-note-details" element={<AcademicNotesDetailsPage />} />
-      <Route path="/add-new-notes" element={<AddNewAcademicNotePage />} />
-      <Route path="/school-page" element={<SchoolPage />} />
-      <Route path="/school-details" element={<SchoolDetailsPage />} />
       <Route path="/study-materials" element={<StudyMaterialsPage />} />
       <Route path="/teachers-page" element={<TeacherPage />} />
       <Route path="/teacher-details" element={<TeacherDetailsPage />} />
@@ -160,13 +132,13 @@ const AppRouter = () => {
 
       {/* Trading Routes */}
       <Route path="/stock-details" element={<StockDetailsPage />} />
+      <Route path="/futures-details" element={<FuturesDetailsPage />} />
+      <Route path="/futures-order" element={<FuturesOrderPage />} />
+      <Route path="/options-details" element={<OptionsDetailsPage />} />
       <Route path="/buy-sell-stock" element={<BuySellStockPage />} />
       <Route path="/order-confirmed-page" element={<OrderConfirmedPage />} />
       <Route path="/purchase-history" element={<PurchaseHistoryPage />} />
-      <Route path="/place-bid" element={<PlaceBidPage />} />
-      <Route path="/futures-details" element={<FuturesDetailsPage />} />
-      <Route path="/buy-futures" element={<BuyFuturePage />} />
-
+      
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

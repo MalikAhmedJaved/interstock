@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Clock } from 'lucide-react'
 import Button from '../components/Button'
+import { getQuestionsForQuiz } from '../data/quizQuestions'
 
 const McqPage = () => {
   const navigate = useNavigate()
@@ -11,32 +12,17 @@ const McqPage = () => {
   const [answers, setAnswers] = useState({}) // Store all answers: { questionIndex: selectedOptionIndex }
   const answersRef = useRef({}) // Ref to track answers for immediate access
   const selectedAnswerRef = useRef(null) // Ref to track current selected answer
+  const currentQuestionRef = useRef(0) // Ref to track current question for timer callback
   const [timeRemaining, setTimeRemaining] = useState(0) // in seconds
   const [isTimeUp, setIsTimeUp] = useState(false)
   const timerRef = useRef(null)
 
-  const questions = [
-    {
-      question: 'What is a stock?',
-      options: [
-        'A type of bond',
-        'A share of ownership in a company',
-        'A type of currency',
-        'A loan to a company',
-      ],
-      correct: 1,
-    },
-    {
-      question: 'What does IPO stand for?',
-      options: [
-        'Initial Public Offering',
-        'International Portfolio Option',
-        'Investment Portfolio Organization',
-        'Initial Private Offering',
-      ],
-      correct: 0,
-    },
-  ]
+  // Get quiz ID and total questions from location state
+  const quizId = location.state?.quizId
+  const totalQuestions = location.state?.totalQuestions || 2
+  
+  // Get questions for this specific quiz
+  const questions = getQuestionsForQuiz(quizId, totalQuestions)
 
   // Get duration from location state
   // If durationSeconds is provided, use it directly, otherwise use duration in minutes
@@ -55,8 +41,11 @@ const McqPage = () => {
     return correct
   }
 
-  // Initialize timer when component mounts
+  // Initialize timer when component mounts - only once
   useEffect(() => {
+    // Initialize currentQuestionRef
+    currentQuestionRef.current = 0
+    
     // Set initial time in seconds
     setTimeRemaining(initialTime)
     
@@ -68,9 +57,9 @@ const McqPage = () => {
           clearInterval(timerRef.current)
           // Auto-submit when time runs out (after 1 second)
           setTimeout(() => {
-            // Save current answer if selected
+            // Save current answer if selected - use ref to get latest currentQuestion
             const finalAnswers = selectedAnswerRef.current !== null 
-              ? { ...answersRef.current, [currentQuestion]: selectedAnswerRef.current }
+              ? { ...answersRef.current, [currentQuestionRef.current]: selectedAnswerRef.current }
               : answersRef.current
             
             // Calculate score
@@ -83,7 +72,9 @@ const McqPage = () => {
                 totalQuestions,
                 answers: finalAnswers,
                 questions,
-                timeUp: true
+                timeUp: true,
+                quizId: location.state?.quizId,
+                quizTitle: location.state?.quizTitle
               }
             })
           }, 1000)
@@ -99,7 +90,8 @@ const McqPage = () => {
         clearInterval(timerRef.current)
       }
     }
-  }, [initialTime, navigate, currentQuestion])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount - timer should run continuously
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60)
@@ -128,7 +120,9 @@ const McqPage = () => {
         score,
         totalQuestions,
         answers: finalAnswers,
-        questions
+        questions,
+        quizId: location.state?.quizId,
+        quizTitle: location.state?.quizTitle
       }
     })
   }
@@ -140,9 +134,11 @@ const McqPage = () => {
     }
     
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1)
+      const nextQuestion = currentQuestion + 1
+      setCurrentQuestion(nextQuestion)
+      currentQuestionRef.current = nextQuestion // Update ref
       // Load saved answer for next question if exists
-      const nextAnswer = answersRef.current[currentQuestion + 1]
+      const nextAnswer = answersRef.current[nextQuestion]
       setSelectedAnswer(nextAnswer ?? null)
       selectedAnswerRef.current = nextAnswer ?? null
     } else {
@@ -151,7 +147,7 @@ const McqPage = () => {
   }
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Question {currentQuestion + 1}/{questions.length}</h2>
         <div className={`flex items-center gap-2 ${isTimeUp ? 'text-red-600' : timeRemaining <= 60 ? 'text-orange-600' : 'text-text-secondary-light'}`}>

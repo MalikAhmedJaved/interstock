@@ -1,7 +1,15 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const QuizHistory = ({ quizzes = [] }) => {
   const navigate = useNavigate()
+  const [attemptedQuizzes, setAttemptedQuizzes] = useState([])
+
+  useEffect(() => {
+    // Load attempted quizzes from localStorage
+    const attempts = JSON.parse(localStorage.getItem('quizAttempts') || '[]')
+    setAttemptedQuizzes(attempts)
+  }, [])
 
   // Default mock data if no quizzes provided - only completed quizzes with scores
   const defaultQuizzes = [
@@ -10,9 +18,20 @@ const QuizHistory = ({ quizzes = [] }) => {
     { id: 3, title: 'Risk Management', score: 78, date: '2024-01-05', completed: true },
   ]
 
-  // Filter to show only completed quizzes with scores
-  const quizList = (quizzes.length > 0 ? quizzes : defaultQuizzes)
-    .filter(quiz => quiz.completed && quiz.score !== undefined)
+  // Use attempted quizzes from localStorage if available, otherwise use provided quizzes or defaults
+  const quizList = attemptedQuizzes.length > 0 
+    ? attemptedQuizzes
+        .sort((a, b) => b.timestamp - a.timestamp) // Sort by most recent first
+        .map(attempt => ({
+          id: attempt.quizId,
+          title: attempt.quizTitle,
+          score: attempt.percentage,
+          date: new Date(attempt.date).toLocaleDateString(),
+          completed: true,
+          totalQuestions: attempt.totalQuestions
+        }))
+    : (quizzes.length > 0 ? quizzes : defaultQuizzes)
+        .filter(quiz => quiz.completed && quiz.score !== undefined)
 
   return (
     <div>
@@ -34,7 +53,16 @@ const QuizHistory = ({ quizzes = [] }) => {
           quizList.slice(0, 3).map((quiz) => (
             <div
               key={quiz.id}
-              onClick={() => navigate('/view-result')}
+              onClick={() => navigate('/view-result', { 
+                state: { 
+                  fromHistory: true,
+                  percentage: quiz.score, // Direct percentage from history
+                  quizTitle: quiz.title,
+                  quizDate: quiz.date,
+                  quizId: quiz.id,
+                  totalQuestions: quiz.totalQuestions || 10 // Use actual totalQuestions if available
+                } 
+              })}
               className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
             >
               <div>

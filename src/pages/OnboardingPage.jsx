@@ -38,7 +38,7 @@ const OnboardingPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background-light">
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6">
         <div className="text-8xl mb-8">{slides[currentSlide].image}</div>
         <h2 className="text-2xl font-bold font-orbitron text-center mb-4">
           {slides[currentSlide].title}
@@ -60,7 +60,7 @@ const OnboardingPage = () => {
         </div>
       </div>
 
-      <div className="px-6 pb-8 space-y-4">
+      <div className="px-4 sm:px-6 pb-6 sm:pb-8 space-y-4">
         <Button onClick={handleNext} className="w-full">
           {currentSlide === slides.length - 1 ? 'Get Started' : 'Next'}
         </Button>

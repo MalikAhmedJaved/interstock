@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Toggle Off" clip-path="url(#clip0_0_18)">
+<g id="Vector">
+</g>
+<path id="Vector_2" d="M31.1667 11H12.8333C6.765 11 1.83333 15.9317 1.83333 22C1.83333 28.0683 6.765 33 12.8333 33H31.1667C37.235 33 42.1667 28.0683 42.1667 22C42.1667 15.9317 37.235 11 31.1667 11Z" fill="var(--fill-0, #4846FF)"/>
+<path id="Vector_3" d="M31.1667 16.5C34.21 16.5 36.6667 18.9567 36.6667 22C36.6667 25.0433 34.21 27.5 31.1667 27.5C28.1233 27.5 25.6667 25.0433 25.6667 22C25.6667 18.9567 28.1233 16.5 31.1667 16.5Z" fill="var(--fill-0, white)"/>
+</g>
+<defs>
+<clipPath id="clip0_0_18">
+<rect width="44" height="44" fill="white"/>
+</clipPath>
+</defs>
+</svg>

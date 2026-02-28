@@ -15,9 +15,17 @@ const NotificationPage = () => {
   }, [])
 
   const notifications = [
-    { id: 1, title: 'New Quiz Available', message: 'Stock Market Basics quiz is now available', time: '2 hours ago' },
-    { id: 2, title: 'Assignment Due', message: 'Your assignment is due tomorrow', time: '5 hours ago' },
+    { id: 1, title: 'New Quiz Available', message: 'Stock Market Basics quiz is now available', time: '2 hours ago', type: 'quiz' },
+    { id: 2, title: 'Assignment Due', message: 'Your assignment is due tomorrow', time: '5 hours ago', type: 'assignment' },
   ]
+
+  const handleNotificationClick = (notification) => {
+    if (notification.type === 'quiz') {
+      navigate('/upcoming-tasks?tab=quizzes')
+    } else if (notification.type === 'assignment') {
+      navigate('/assignments')
+    }
+  }
 
   const toggleNotifications = () => {
     setNotificationsEnabled(!notificationsEnabled)
@@ -26,7 +34,7 @@ const NotificationPage = () => {
   }
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back
@@ -63,7 +71,11 @@ const NotificationPage = () => {
 
       <div className="space-y-3">
         {notifications.map((notification) => (
-          <div key={notification.id} className="card p-4">
+          <div 
+            key={notification.id} 
+            className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => handleNotificationClick(notification)}
+          >
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <Bell className="text-primary" size={20} />

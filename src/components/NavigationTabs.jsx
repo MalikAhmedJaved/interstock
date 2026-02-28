@@ -23,8 +23,8 @@ const NavigationTabs = () => {
   const isActive = (path) => location.pathname === path
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
-      <div className="flex justify-around items-center h-20">
+    <div className="fixed bottom-0 left-0 right-0 lg:left-80 bg-white border-t border-gray-200 shadow-lg z-50">
+      <div className="flex justify-around items-center h-16 sm:h-20 max-w-4xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon
           const active = isActive(item.path)

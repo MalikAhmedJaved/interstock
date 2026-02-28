@@ -8,7 +8,7 @@ const QuizDetailsPage = () => {
   const completed = isCompleted === 'true'
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back
@@ -51,7 +51,18 @@ const QuizDetailsPage = () => {
         <div className="space-y-2">
           <Button
             className="w-full"
-            onClick={() => navigate(completed ? '/view-result' : '/mcq-page')}
+            onClick={() => {
+              if (completed) {
+                navigate('/view-result')
+              } else {
+                navigate('/mcq-page', {
+                  state: {
+                    totalQuestions: 10, // Quiz has 10 questions
+                    duration: 15 // 15 minutes
+                  }
+                })
+              }
+            }}
           >
             {completed ? 'View Results' : 'Start Quiz'}
           </Button>

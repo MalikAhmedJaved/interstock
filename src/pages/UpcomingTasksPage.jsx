@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { FileText, BookOpen, Clock, Calendar } from 'lucide-react'
+import { FileText, BookOpen, Clock, Calendar, Trophy } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { getQuizzesWithDuration } from '../data/quizzesData'
 
 const UpcomingTasksPage = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('assignments') // 'assignments' or 'quizzes'
+  const [attemptedQuizzes, setAttemptedQuizzes] = useState([])
   const isActive = user?.isActive !== false // Default to true if not set
 
   useEffect(() => {
@@ -15,7 +17,15 @@ const UpcomingTasksPage = () => {
     if (tab === 'quizzes' || tab === 'assignments') {
       setActiveTab(tab)
     }
+    
+    // Load attempted quizzes from localStorage
+    const attempts = JSON.parse(localStorage.getItem('quizAttempts') || '[]')
+    setAttemptedQuizzes(attempts)
   }, [searchParams])
+
+  // Check if we should show tabs or just one view
+  const showTabs = !searchParams.get('tab') // Show tabs only if no specific tab is requested
+  const requestedTab = searchParams.get('tab')
 
   // Sample data - in real app, this would come from an API
   const upcomingAssignments = [
@@ -48,48 +58,8 @@ const UpcomingTasksPage = () => {
     },
   ]
 
-  const upcomingQuizzes = [
-    {
-      id: 1,
-      title: 'Stock Market Basics Quiz',
-      deadline: '2024-11-27',
-      time: '10:00 AM',
-      questions: 15,
-      subject: 'Trading Fundamentals',
-      status: 'upcoming'
-    },
-    {
-      id: 2,
-      title: 'Risk Management Assessment',
-      deadline: '2025-12-10',
-      time: '2:00 PM',
-      questions: 20,
-      subject: 'Risk Management',
-      status: 'upcoming'
-    },
-    {
-      id: 3,
-      title: 'Options Trading Quiz',
-      deadline: '2025-12-15',
-      time: '3:30 PM',
-      questions: 18,
-      subject: 'Options Trading',
-      status: 'upcoming'
-    },
-    {
-      id: 4,
-      title: 'Quick Knowledge Check',
-      deadline: '2025-12-04',
-      time: '11:00 AM',
-      questions: 1,
-      subject: 'General Knowledge',
-      status: 'upcoming',
-      durationSeconds: 30 // Custom duration in seconds
-    },
-  ].map(quiz => ({
-    ...quiz,
-    duration: quiz.durationSeconds ? `${quiz.durationSeconds} sec` : `${quiz.questions} min` // 1 minute per question or custom duration
-  }))
+  // Use shared quizzes data
+  const upcomingQuizzes = getQuizzesWithDuration()
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -136,45 +106,49 @@ const UpcomingTasksPage = () => {
   }
 
   return (
-    <div className="px-6 py-6 space-y-6 pb-24">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-text-primary-dark">
+        <button onClick={() => navigate('/home')} className="text-text-primary-dark">
           ← Back
         </button>
-        <h2 className="text-2xl font-bold font-orbitron">Upcoming Tasks</h2>
+        <h2 className="text-2xl font-bold font-orbitron">
+          {requestedTab === 'assignments' ? 'Assignments' : requestedTab === 'quizzes' ? 'Quizzes' : 'Upcoming Tasks'}
+        </h2>
       </div>
 
-      {/* Tab Buttons */}
-      <div className="flex gap-3">
-        <button
-          onClick={() => {
-            setActiveTab('assignments')
-            navigate('/upcoming-tasks?tab=assignments', { replace: true })
-          }}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
-            activeTab === 'assignments'
-              ? 'bg-primary text-white'
-              : 'bg-white text-text-primary-dark border border-gray-200'
-          }`}
-        >
-          <FileText size={20} />
-          <span>Assignments</span>
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab('quizzes')
-            navigate('/upcoming-tasks?tab=quizzes', { replace: true })
-          }}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
-            activeTab === 'quizzes'
-              ? 'bg-primary text-white'
-              : 'bg-white text-text-primary-dark border border-gray-200'
-          }`}
-        >
-          <BookOpen size={20} />
-          <span>Quizzes</span>
-        </button>
-      </div>
+      {/* Tab Buttons - Only show if no specific tab is requested */}
+      {showTabs && (
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              setActiveTab('assignments')
+              navigate('/upcoming-tasks?tab=assignments', { replace: true })
+            }}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'assignments'
+                ? 'bg-primary text-white'
+                : 'bg-white text-text-primary-dark border border-gray-200'
+            }`}
+          >
+            <FileText size={20} />
+            <span>Assignments</span>
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('quizzes')
+              navigate('/upcoming-tasks?tab=quizzes', { replace: true })
+            }}
+            className={`flex-1 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+              activeTab === 'quizzes'
+                ? 'bg-primary text-white'
+                : 'bg-white text-text-primary-dark border border-gray-200'
+            }`}
+          >
+            <BookOpen size={20} />
+            <span>Quizzes</span>
+          </button>
+        </div>
+      )}
 
       {/* Assignments Content */}
       {activeTab === 'assignments' && (
@@ -245,6 +219,9 @@ const UpcomingTasksPage = () => {
               const dueDateStatus = getDueDateStatus(quiz.deadline, quiz.time)
               // Force orange color for upcoming quizzes
               const quizStatusColor = dueDateStatus.text.includes('Due in') ? 'text-orange-600' : dueDateStatus.color
+              const quizAttempt = attemptedQuizzes.find(attempt => attempt.quizId === quiz.id)
+              const isAttempted = !!quizAttempt
+              
               return (
                 <div
                   key={quiz.id}
@@ -256,7 +233,15 @@ const UpcomingTasksPage = () => {
                       <BookOpen className="text-primary" size={24} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg mb-1">{quiz.title}</h3>
+                      <div className="flex items-start justify-between mb-1">
+                        <h3 className="font-semibold text-lg">{quiz.title}</h3>
+                        {isAttempted && (
+                          <div className="flex items-center gap-1 text-stock-green ml-2">
+                            <Trophy size={16} />
+                            <span className="text-sm font-medium">Attempted</span>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-sm text-text-secondary-light mb-3">{quiz.subject}</p>
                       <div className="flex items-center gap-4 flex-wrap mb-3">
                         <div className="flex items-center gap-2 text-text-secondary-light text-sm">
@@ -267,14 +252,28 @@ const UpcomingTasksPage = () => {
                           <Clock size={16} />
                           <span>{quiz.time}</span>
                         </div>
-                        <div className={`text-sm font-medium ${quizStatusColor}`}>
-                          {dueDateStatus.text}
-                        </div>
+                        {isAttempted ? (
+                          <div className="text-sm font-medium text-stock-green">
+                            Attempted
+                          </div>
+                        ) : (
+                          <div className={`text-sm font-medium ${quizStatusColor}`}>
+                            {dueDateStatus.text}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-text-secondary-light">
                         <span>{quiz.questions} Questions</span>
                         <span>•</span>
                         <span>{quiz.duration}</span>
+                        {isAttempted && (
+                          <>
+                            <span>•</span>
+                            <span className="text-stock-green font-medium">
+                              Score: {quizAttempt.score}/{quizAttempt.totalQuestions} ({quizAttempt.percentage}%)
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

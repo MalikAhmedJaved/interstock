@@ -1,57 +1,149 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Clock, Trophy } from 'lucide-react'
+import { BookOpen, Clock, Trophy, ArrowLeft } from 'lucide-react'
+import Button from '../components/Button'
+import { getQuizzesWithDuration } from '../data/quizzesData'
 
 const QuizHomePage = () => {
   const navigate = useNavigate()
+  const [attemptedQuizzes, setAttemptedQuizzes] = useState([])
+  const [latestAttempt, setLatestAttempt] = useState(null)
 
-  const quizzes = [
-    { id: 1, title: 'Stock Market Basics', questions: 10, time: '15 min', completed: true },
-    { id: 2, title: 'Trading Strategies', questions: 15, time: '20 min', completed: false },
-    { id: 3, title: 'Risk Management', questions: 12, time: '18 min', completed: false },
-  ]
+  // Use shared quizzes data
+  const allQuizzes = getQuizzesWithDuration().map(quiz => ({
+    id: quiz.id,
+    title: quiz.title,
+    questions: quiz.questions,
+    time: quiz.duration,
+  }))
+
+  useEffect(() => {
+    // Load attempted quizzes from localStorage
+    const attempts = JSON.parse(localStorage.getItem('quizAttempts') || '[]')
+    setAttemptedQuizzes(attempts)
+    
+    // Find latest attempt
+    if (attempts.length > 0) {
+      const latest = attempts.reduce((latest, current) => 
+        current.timestamp > latest.timestamp ? current : latest
+      )
+      setLatestAttempt(latest)
+    }
+  }, [])
+
+  const isQuizAttempted = (quizId) => {
+    return attemptedQuizzes.some(attempt => attempt.quizId === quizId)
+  }
+
+  const getQuizAttempt = (quizId) => {
+    return attemptedQuizzes.find(attempt => attempt.quizId === quizId)
+  }
+
+  const handleQuizClick = (quiz) => {
+    // Navigate to quiz detail page
+    navigate(`/quiz/${quiz.id}`)
+  }
+
+  const handleViewResults = (e, quiz, attempt) => {
+    e.stopPropagation() // Prevent triggering the parent onClick
+    // Navigate to view result page with attempt data
+    navigate('/view-result', {
+      state: {
+        fromHistory: true,
+        percentage: attempt.percentage,
+        score: attempt.score,
+        totalQuestions: attempt.totalQuestions,
+        quizId: quiz.id
+      }
+    })
+  }
 
   return (
-    <div className="px-6 py-6 space-y-6">
-      <h2 className="text-2xl font-bold font-orbitron">Quiz Home</h2>
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold font-orbitron">Quiz Home</h2>
+        <Button
+          variant="secondary"
+          onClick={() => navigate('/upcoming-tasks?tab=quizzes')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft size={16} />
+          Upcoming Quizzes
+        </Button>
+      </div>
+
+      {/* Latest Attempted Quiz Section */}
+      {latestAttempt && (
+        <div className="card p-4 bg-primary/5 border-2 border-primary/20">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-medium text-text-secondary-light mb-1">Latest Attempt</h3>
+              <h3 className="font-semibold text-lg">{latestAttempt.quizTitle}</h3>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-primary">{latestAttempt.percentage}%</div>
+              <div className="text-sm text-text-secondary-light">
+                {latestAttempt.score}/{latestAttempt.totalQuestions}
+              </div>
+            </div>
+          </div>
+          <div className="text-xs text-text-secondary-light">
+            Attempted on {new Date(latestAttempt.date).toLocaleDateString()}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
-        {quizzes.map((quiz) => (
-          <div
-            key={quiz.id}
-            onClick={() => navigate(`/quiz-details/${quiz.completed}`)}
-            className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="text-primary" size={24} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{quiz.title}</h3>
-                  <div className="flex items-center gap-4 mt-1">
-                    <div className="flex items-center gap-1 text-text-secondary-light text-sm">
-                      <BookOpen size={14} />
-                      <span>{quiz.questions} Questions</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-text-secondary-light text-sm">
-                      <Clock size={14} />
-                      <span>{quiz.time}</span>
+        {allQuizzes.map((quiz) => {
+          const attempted = isQuizAttempted(quiz.id)
+          const attempt = getQuizAttempt(quiz.id)
+          
+          return (
+            <div
+              key={quiz.id}
+              onClick={() => handleQuizClick(quiz)}
+              className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="text-primary" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg">{quiz.title}</h3>
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className="flex items-center gap-1 text-text-secondary-light text-sm">
+                        <BookOpen size={14} />
+                        <span>{quiz.questions} Questions</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-text-secondary-light text-sm">
+                        <Clock size={14} />
+                        <span>{quiz.time}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
+                {attempted && (
+                  <div className="flex items-center gap-1 text-stock-green">
+                    <Trophy size={16} />
+                    <span className="text-sm font-medium">Attempted</span>
+                  </div>
+                )}
               </div>
-              {quiz.completed && (
-                <div className="flex items-center gap-1 text-stock-green">
-                  <Trophy size={16} />
-                  <span className="text-sm font-medium">Completed</span>
+              <button 
+                className="w-full btn-primary text-sm py-2"
+                onClick={attempted && attempt ? (e) => handleViewResults(e, quiz, attempt) : undefined}
+              >
+                {attempted ? 'View Results' : 'Start Quiz'}
+              </button>
+              {attempted && attempt && (
+                <div className="mt-2 text-xs text-text-secondary-light text-center">
+                  Score: {attempt.score}/{attempt.totalQuestions} ({attempt.percentage}%)
                 </div>
               )}
             </div>
-            <button className="w-full btn-primary text-sm py-2">
-              {quiz.completed ? 'View Results' : 'Start Quiz'}
-            </button>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

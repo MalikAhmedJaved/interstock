@@ -30,7 +30,7 @@ const UtilityMenu = () => {
   }, [isOpen])
 
   const menuItems = [
-    { icon: FileText, label: 'Assignments', onClick: () => navigate('/upcoming-tasks?tab=assignments') },
+    { icon: FileText, label: 'Assignments', onClick: () => navigate('/assignments') },
     { icon: BookOpen, label: 'Quizzes', onClick: () => navigate('/upcoming-tasks?tab=quizzes') },
     { icon: Trophy, label: 'Achievements', onClick: () => navigate('/achievements') },
     { icon: Users, label: 'Chat Rooms', onClick: () => navigate('/chat-room') },

@@ -67,18 +67,18 @@ const ProfilePage = () => {
   ]
 
   return (
-    <div className="px-6 py-6 space-y-6 pb-24">
-      <h2 className="text-2xl font-bold font-orbitron">My Profile</h2>
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
+      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold font-orbitron">My Profile</h2>
 
       {/* Profile Header */}
       <div className="flex flex-col items-center">
-        <div className="relative mb-4">
+        <div className="relative mb-3 sm:mb-4">
           <label className="cursor-pointer block">
-            <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20 hover:border-primary/40 transition-colors">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20 hover:border-primary/40 transition-colors">
               {profileImage ? (
                 <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <User size={48} className="text-gray-400" />
+                <User size={40} className="text-gray-400 sm:w-12 sm:h-12" />
               )}
             </div>
             <input
@@ -96,12 +96,12 @@ const ProfilePage = () => {
             <Camera size={16} />
           </label>
         </div>
-        <h3 className="text-xl font-semibold">{userName}</h3>
-        <p className="text-text-secondary-light">{userEmail}</p>
+        <h3 className="text-lg sm:text-xl font-semibold">{userName}</h3>
+        <p className="text-sm sm:text-base text-text-secondary-light">{userEmail}</p>
       </div>
 
       {/* Profile Items */}
-      <div className="space-y-2">
+      <div className="space-y-2 lg:space-y-3 max-w-2xl lg:mx-auto">
         {profileItems.map((item, index) => {
           const Icon = item.icon
           return (
@@ -128,7 +128,7 @@ const ProfilePage = () => {
           logout()
           navigate('/login')
         }}
-        className="w-full py-3 rounded-xl border-2 border-error text-error font-semibold hover:bg-error/10 transition-colors"
+        className="w-full max-w-2xl lg:mx-auto lg:block py-3 rounded-xl border-2 border-error text-error font-semibold hover:bg-error/10 transition-colors"
       >
         Logout
       </button>

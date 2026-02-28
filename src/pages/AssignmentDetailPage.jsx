@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { FileText, Calendar, Clock, Upload, AlertCircle } from 'lucide-react'
+import { FileText, Calendar, Clock, Upload, AlertCircle, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
+import { assignmentsData } from '../data/assignmentsData'
+import { isAssignmentSubmitted, submitAssignment, getSubmissionDate } from '../utils/assignmentSubmissions'
 
 const AssignmentDetailPage = () => {
   const navigate = useNavigate()
@@ -11,47 +13,29 @@ const AssignmentDetailPage = () => {
   const [file, setFile] = useState(null)
   const [assignment, setAssignment] = useState(null)
   const [isLate, setIsLate] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submissionDate, setSubmissionDate] = useState(null)
   const isActive = user?.isActive !== false
 
-  // Sample assignments data - in real app, this would come from an API
-  const assignments = [
-    {
-      id: 1,
-      title: 'Stock Market Analysis Report',
-      deadline: '2024-11-28',
-      time: '11:59 PM',
-      subject: 'Trading Fundamentals',
-      status: 'upcoming',
-      description: 'Analyze the current stock market trends and provide a comprehensive report on your findings. Include market indicators, sector performance, and future predictions.'
-    },
-    {
-      id: 2,
-      title: 'Trading Strategy Essay',
-      deadline: '2025-12-05',
-      time: '11:59 PM',
-      subject: 'Advanced Trading',
-      status: 'upcoming',
-      description: 'Write a detailed essay on different trading strategies, their pros and cons, and when to use each strategy. Include real-world examples.'
-    },
-    {
-      id: 3,
-      title: 'Portfolio Management Assignment',
-      deadline: '2025-12-05',
-      time: '11:59 PM',
-      subject: 'Portfolio Management',
-      status: 'upcoming',
-      description: 'Create a portfolio management plan for a hypothetical client. Include risk assessment, asset allocation, and rebalancing strategies.'
-    },
-  ]
+  // Use shared assignments data
+  const assignments = assignmentsData
 
   useEffect(() => {
-    const foundAssignment = assignments.find(a => a.id === parseInt(id))
+    const assignmentId = parseInt(id)
+    const foundAssignment = assignments.find(a => a.id === assignmentId)
     if (foundAssignment) {
       setAssignment(foundAssignment)
       // Check if assignment is late
       const today = new Date()
       const deadlineDate = new Date(foundAssignment.deadline + ' ' + foundAssignment.time)
       setIsLate(today > deadlineDate)
+      
+      // Check if assignment is already submitted
+      const submitted = isAssignmentSubmitted(assignmentId)
+      setIsSubmitted(submitted)
+      if (submitted) {
+        setSubmissionDate(getSubmissionDate(assignmentId))
+      }
     }
   }, [id])
 
@@ -61,6 +45,10 @@ const AssignmentDetailPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (isSubmitted) {
+      alert('This assignment has already been submitted. You cannot submit it again.')
+      return
+    }
     if (isLate) {
       alert('You cannot submit this assignment as the due date has passed.')
       return
@@ -70,8 +58,12 @@ const AssignmentDetailPage = () => {
       return
     }
     // Submit assignment
+    const assignmentId = parseInt(id)
+    submitAssignment(assignmentId)
+    setIsSubmitted(true)
+    setSubmissionDate(new Date().toISOString())
     alert('Assignment submitted successfully')
-    navigate('/upcoming-tasks?tab=assignments')
+    navigate('/assignments')
   }
 
   const formatDate = (dateString) => {
@@ -86,7 +78,7 @@ const AssignmentDetailPage = () => {
 
   if (!isActive) {
     return (
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="text-text-primary-dark">
             ← Back
@@ -103,7 +95,7 @@ const AssignmentDetailPage = () => {
 
   if (!assignment) {
     return (
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="text-text-primary-dark">
             ← Back
@@ -115,7 +107,7 @@ const AssignmentDetailPage = () => {
   }
 
   return (
-    <div className="px-6 py-6 space-y-6 pb-24">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back
@@ -145,8 +137,18 @@ const AssignmentDetailPage = () => {
               </div>
             </div>
 
+            {/* Submitted Status */}
+            {isSubmitted && (
+              <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4">
+                <CheckCircle size={18} />
+                <span className="font-medium">
+                  Assignment Submitted {submissionDate && `on ${formatDate(submissionDate.split('T')[0])}`}
+                </span>
+              </div>
+            )}
+
             {/* Late Warning */}
-            {isLate && (
+            {isLate && !isSubmitted && (
               <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg mb-4">
                 <AlertCircle size={18} />
                 <span className="font-medium">You're late! The due date has passed.</span>
@@ -166,35 +168,50 @@ const AssignmentDetailPage = () => {
         {/* Submission Form */}
         <div className="border-t border-gray-200 pt-6">
           <h4 className="font-semibold text-lg mb-4">Submit Your Assignment</h4>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <label className="cursor-pointer">
-              <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                isLate 
-                  ? 'border-gray-300 bg-gray-50' 
-                  : 'border-gray-300 hover:border-primary'
-              }`}>
-                <Upload className={`mx-auto mb-2 ${isLate ? 'text-gray-400' : 'text-text-secondary-light'}`} size={32} />
-                <p className={isLate ? 'text-gray-400' : 'text-text-secondary-light'}>
-                  {file ? file.name : 'Click to upload file (PDF, DOC, DOCX)'}
+          {isSubmitted ? (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+              <CheckCircle className="mx-auto mb-3 text-green-600" size={48} />
+              <p className="text-green-600 font-medium mb-2">Assignment Already Submitted</p>
+              {submissionDate && (
+                <p className="text-sm text-green-600">
+                  Submitted on {formatDate(submissionDate.split('T')[0])}
                 </p>
-              </div>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={handleFileChange}
-                disabled={isLate}
-                className="hidden"
-              />
-            </label>
+              )}
+              <p className="text-sm text-text-secondary-light mt-2">
+                You cannot submit this assignment again.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <label className="cursor-pointer">
+                <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                  isLate 
+                    ? 'border-gray-300 bg-gray-50' 
+                    : 'border-gray-300 hover:border-primary'
+                }`}>
+                  <Upload className={`mx-auto mb-2 ${isLate ? 'text-gray-400' : 'text-text-secondary-light'}`} size={32} />
+                  <p className={isLate ? 'text-gray-400' : 'text-text-secondary-light'}>
+                    {file ? file.name : 'Click to upload file (PDF, DOC, DOCX)'}
+                  </p>
+                </div>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  disabled={isLate || isSubmitted}
+                  className="hidden"
+                />
+              </label>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLate || !file}
-            >
-              {isLate ? "You're Late - Cannot Submit Assignment" : 'Submit Assignment'}
-            </Button>
-          </form>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isLate || !file || isSubmitted}
+              >
+                {isLate ? "You're Late - Cannot Submit Assignment" : 'Submit Assignment'}
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     </div>

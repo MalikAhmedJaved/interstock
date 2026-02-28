@@ -54,7 +54,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-background-light">
       <PublicHeader />
-      <div className="px-6 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold font-orbitron text-center text-primary mb-8">
             InterStock

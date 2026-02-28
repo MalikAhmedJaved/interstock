@@ -12,15 +12,15 @@ const PortfolioChart = () => {
   ]
 
   return (
-    <div className="card p-4">
+    <div className="card p-4 sm:p-6">
       <div className="mb-4">
-        <h3 className="text-2xl font-bold">$18,908.00</h3>
+        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold">$18,908.00</h3>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-stock-green font-semibold">+4.78%</span>
-          <span className="text-text-secondary-light text-sm">+0.20% vs Last week</span>
+          <span className="text-stock-green font-semibold text-sm sm:text-base">+4.78%</span>
+          <span className="text-text-secondary-light text-xs sm:text-sm">+0.20% vs Last week</span>
         </div>
       </div>
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={200} className="sm:!h-[260px] lg:!h-[300px]">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis dataKey="name" stroke="#9CA3AF" />
@@ -37,12 +37,12 @@ const PortfolioChart = () => {
       </ResponsiveContainer>
       <div className="mt-4 flex items-center justify-between">
         <div>
-          <p className="text-sm text-text-secondary-light">Current Price</p>
-          <p className="text-lg font-semibold">$17.56</p>
+          <p className="text-xs sm:text-sm text-text-secondary-light">Current Price</p>
+          <p className="text-base sm:text-lg font-semibold">$17.56</p>
         </div>
         <div className="text-right">
-          <p className="text-sm text-text-secondary-light">Change</p>
-          <p className="text-lg font-semibold text-stock-green">+3.45%</p>
+          <p className="text-xs sm:text-sm text-text-secondary-light">Change</p>
+          <p className="text-base sm:text-lg font-semibold text-stock-green">+3.45%</p>
         </div>
       </div>
     </div>

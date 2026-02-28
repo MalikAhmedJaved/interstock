@@ -72,7 +72,7 @@ const ChatRoomDetailsPage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background-light">
-      <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-4">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back
         </button>
@@ -89,7 +89,7 @@ const ChatRoomDetailsPage = () => {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -112,7 +112,7 @@ const ChatRoomDetailsPage = () => {
         ))}
       </div>
 
-      <form onSubmit={handleSend} className="px-6 py-4 border-t border-gray-200">
+      <form onSubmit={handleSend} className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200">
         <div className="flex gap-2">
           <input
             type="text"

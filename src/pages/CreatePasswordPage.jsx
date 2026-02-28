@@ -20,12 +20,12 @@ const CreatePasswordPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (formData.password === formData.confirmPassword) {
-      navigate('/select-school')
+      navigate('/login')
     }
   }
 
   return (
-    <div className="min-h-screen bg-background-light px-6 py-8">
+    <div className="min-h-screen bg-background-light px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
       <div className="max-w-md mx-auto">
         <h2 className="text-2xl font-medium font-orbitron mb-2">Create Password</h2>
         <p className="text-text-secondary-light mb-8">

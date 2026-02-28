@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { API_ENDPOINTS } from '../config/api'
 
 const AuthContext = createContext()
 
@@ -14,112 +15,136 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Get registered users from localStorage
-  const getRegisteredUsers = () => {
-    const users = localStorage.getItem('registeredUsers')
-    return users ? JSON.parse(users) : []
-  }
+  // Register new user
+  const registerUser = async (userData) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.AUTH.SIGNUP, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: userData.name,
+          email: userData.email,
+          password: userData.password,
+          phone: userData.phone || ''
+        }),
+      })
 
-  // Save registered user
-  const registerUser = (userData) => {
-    const users = getRegisteredUsers()
-    // Check if user already exists
-    if (users.find(u => u.email === userData.email)) {
-      throw new Error('User with this email already exists')
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed')
+      }
+
+      // Store token and user data
+      localStorage.setItem('authToken', data.token)
+      localStorage.setItem('userData', JSON.stringify(data.user))
+      setUser(data.user)
+
+      return data
+    } catch (error) {
+      throw error
     }
-    // Set isActive to true by default for new users
-    users.push({ ...userData, isActive: true })
-    localStorage.setItem('registeredUsers', JSON.stringify(users))
   }
 
   useEffect(() => {
-    // Check for stored auth token and user data
+    // Check for stored auth token and verify with backend
     const token = localStorage.getItem('authToken')
     const userData = localStorage.getItem('userData')
+    
     if (token && userData) {
-      const parsedUserData = JSON.parse(userData)
-      // Ensure isActive is set (default to true if not set)
-      if (parsedUserData.isActive === undefined) {
-        parsedUserData.isActive = true
-      }
-      setUser(parsedUserData)
+      // Verify token with backend
+      fetch(API_ENDPOINTS.AUTH.ME, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.user) {
+            setUser(data.user)
+            // Update stored user data
+            localStorage.setItem('userData', JSON.stringify(data.user))
+          } else {
+            // Token invalid, clear storage
+            localStorage.removeItem('authToken')
+            localStorage.removeItem('userData')
+          }
+        })
+        .catch(() => {
+          // Error fetching user, clear storage
+          localStorage.removeItem('authToken')
+          localStorage.removeItem('userData')
+        })
+        .finally(() => {
+          setLoading(false)
+        })
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   const login = async (email, password) => {
-    const users = getRegisteredUsers()
-    const foundUser = users.find(u => u.email === email && u.password === password)
-    
-    if (!foundUser) {
-      throw new Error('Invalid email or password')
-    }
+    try {
+      const response = await fetch(API_ENDPOINTS.AUTH.SIGNIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
 
-    const token = `token-${Date.now()}`
-    const userData = {
-      token,
-      email: foundUser.email,
-      name: foundUser.name,
-      phone: foundUser.phone || '',
-      isActive: foundUser.isActive !== undefined ? foundUser.isActive : true
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Invalid email or password')
+      }
+
+      // Store token and user data
+      localStorage.setItem('authToken', data.token)
+      localStorage.setItem('userData', JSON.stringify(data.user))
+      setUser(data.user)
+    } catch (error) {
+      throw error
     }
-    
-    localStorage.setItem('authToken', token)
-    localStorage.setItem('userData', JSON.stringify(userData))
-    setUser(userData)
   }
 
-  const changePassword = (currentPassword, newPassword) => {
-    const users = getRegisteredUsers()
-    const currentUserEmail = user?.email
-    
-    if (!currentUserEmail) {
-      throw new Error('User not logged in')
-    }
+  const changePassword = async (currentPassword, newPassword) => {
+    try {
+      const token = localStorage.getItem('authToken')
+      
+      if (!token) {
+        throw new Error('You must be logged in to change password')
+      }
 
-    // Find the current user
-    const userIndex = users.findIndex(u => u.email === currentUserEmail)
-    
-    if (userIndex === -1) {
-      throw new Error('User not found')
-    }
+      const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword
+        }),
+      })
 
-    // Verify current password
-    if (users[userIndex].password !== currentPassword) {
-      throw new Error('Current password is incorrect')
-    }
+      const data = await response.json()
 
-    // Update password
-    users[userIndex].password = newPassword
-    localStorage.setItem('registeredUsers', JSON.stringify(users))
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to change password')
+      }
+
+      return data
+    } catch (error) {
+      throw error
+    }
   }
 
-  const updateProfile = (profileData) => {
-    const users = getRegisteredUsers()
-    const currentUserEmail = user?.email
-    
-    if (!currentUserEmail) {
-      throw new Error('User not logged in')
-    }
-
-    // Find the current user
-    const userIndex = users.findIndex(u => u.email === currentUserEmail)
-    
-    if (userIndex === -1) {
-      throw new Error('User not found')
-    }
-
-    // Update user data
-    users[userIndex].name = profileData.name
-    users[userIndex].email = profileData.email
-    if (profileData.phone) {
-      users[userIndex].phone = profileData.phone
-    }
-    
-    // Save updated users
-    localStorage.setItem('registeredUsers', JSON.stringify(users))
-
-    // Update current user state
+  const updateProfile = async (profileData) => {
+    // TODO: Implement update profile API endpoint in backend
+    // For now, update local state
     const updatedUserData = {
       ...user,
       name: profileData.name,
@@ -131,25 +156,9 @@ export const AuthProvider = ({ children }) => {
     setUser(updatedUserData)
   }
 
-  const deactivateAccount = () => {
-    const users = getRegisteredUsers()
-    const currentUserEmail = user?.email
-    
-    if (!currentUserEmail) {
-      throw new Error('User not logged in')
-    }
-
-    const userIndex = users.findIndex(u => u.email === currentUserEmail)
-    
-    if (userIndex === -1) {
-      throw new Error('User not found')
-    }
-
-    // Set isActive to false
-    users[userIndex].isActive = false
-    localStorage.setItem('registeredUsers', JSON.stringify(users))
-
-    // Update current user state
+  const deactivateAccount = async () => {
+    // TODO: Implement deactivate account API endpoint in backend
+    // For now, update local state
     const updatedUserData = {
       ...user,
       isActive: false
@@ -159,25 +168,9 @@ export const AuthProvider = ({ children }) => {
     setUser(updatedUserData)
   }
 
-  const activateAccount = () => {
-    const users = getRegisteredUsers()
-    const currentUserEmail = user?.email
-    
-    if (!currentUserEmail) {
-      throw new Error('User not logged in')
-    }
-
-    const userIndex = users.findIndex(u => u.email === currentUserEmail)
-    
-    if (userIndex === -1) {
-      throw new Error('User not found')
-    }
-
-    // Set isActive to true
-    users[userIndex].isActive = true
-    localStorage.setItem('registeredUsers', JSON.stringify(users))
-
-    // Update current user state
+  const activateAccount = async () => {
+    // TODO: Implement activate account API endpoint in backend
+    // For now, update local state
     const updatedUserData = {
       ...user,
       isActive: true

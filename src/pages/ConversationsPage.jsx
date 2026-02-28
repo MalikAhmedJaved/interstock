@@ -15,12 +15,17 @@ const ConversationsPage = () => {
   ]
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold font-orbitron">Conversations</h2>
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-text-primary-dark">
+            ← Back
+          </button>
+          <h2 className="text-2xl font-bold font-orbitron">Conversations</h2>
+        </div>
         {isActive && (
           <button
-            onClick={() => navigate('/new-group-page')}
+            onClick={() => navigate('/new-chat-page')}
             className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center"
           >
             <Plus size={20} />

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FileText, Book, Video, AlertCircle, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const StudyMaterialsPage = () => {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const isActive = user?.isActive !== false
   const [showDialog, setShowDialog] = useState(false)
@@ -20,8 +22,13 @@ const StudyMaterialsPage = () => {
   ]
 
   return (
-    <div className="px-6 py-6 space-y-6">
-      <h2 className="text-2xl font-bold font-orbitron">Study Materials</h2>
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="flex items-center gap-4">
+        <button onClick={() => navigate(-1)} className="text-text-primary-dark">
+          ← Back
+        </button>
+        <h2 className="text-2xl font-bold font-orbitron">Study Materials</h2>
+      </div>
 
       {showDialog && !isActive && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 relative">

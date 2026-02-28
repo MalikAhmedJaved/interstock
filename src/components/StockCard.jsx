@@ -7,7 +7,7 @@ const StockCard = ({ stock }) => {
 
   return (
     <div
-      onClick={() => navigate('/stock-details')}
+      onClick={() => navigate('/stock-details', { state: { stock } })}
       className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
     >
       <div className="flex items-center justify-between">
