@@ -47,14 +47,14 @@ const MainLayout = ({ children }) => {
       {/* Sidebar - hidden on mobile, visible on lg+ */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-72 sm:w-80 transform transition-transform duration-300 ease-in-out
-          lg:relative lg:translate-x-0 lg:z-auto lg:shrink-0
+          fixed left-0 top-0 z-50 w-72 sm:w-80 transform transition-transform duration-300 ease-in-out
+          lg:inset-y-0 lg:relative lg:translate-x-0 lg:z-auto lg:shrink-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          py-4 pl-4 sm:pl-6 pr-2 overflow-y-auto
+          py-4 pl-4 sm:pl-6 pr-2 overflow-y-auto max-h-screen lg:max-h-none
         `}
       >
         <div
-          className="bg-white rounded-3xl lg:rounded-[40px] p-6 sm:p-8 flex flex-col gap-4 min-h-full"
+          className="bg-white rounded-3xl lg:rounded-[40px] p-6 sm:p-8 flex flex-col gap-4 lg:min-h-full"
           style={{ boxShadow: '0 0 14px rgba(0,0,0,0.1)' }}
         >
           {/* Close button on mobile */}
@@ -110,30 +110,37 @@ const MainLayout = ({ children }) => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Desktop header - visible on lg+ */}
+        {/* Header - visible on all screen sizes */}
         <header
-          className="hidden lg:flex sticky top-0 z-10 items-center justify-between px-8 py-4 backdrop-blur-md bg-[#F0F4F8]/80"
+          className="sticky top-0 z-10 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-6 backdrop-blur-md bg-[#F0F4F8]/80"
           style={{ boxShadow: '0 0 14px rgba(0,0,0,0.1)' }}
         >
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-semibold font-inter text-black">InterStock</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center hover:bg-white/80 transition-colors">
-              <RefreshCw size={20} className="text-gray-600" />
+          {/* Mobile hamburger */}
+          <button
+            className="lg:hidden p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu size={24} className="text-gray-900" />
+          </button>
+
+          <h1 className="text-xl sm:text-2xl font-semibold font-inter text-black">InterStock</h1>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/60 flex items-center justify-center hover:bg-white/80 transition-colors">
+              <RefreshCw size={18} className="text-gray-600 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={() => navigate('/notifications')}
-              className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center relative hover:bg-white/80 transition-colors"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/60 flex items-center justify-center relative hover:bg-white/80 transition-colors"
             >
-              <Bell size={20} className="text-gray-600" />
-              <span className="absolute top-3 right-3 w-2 h-2 bg-stock-red rounded-full"></span>
+              <Bell size={18} className="text-gray-600 sm:w-5 sm:h-5" />
+              <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-2 h-2 bg-stock-red rounded-full"></span>
             </button>
             {/* Profile avatar with dropdown */}
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                className="w-12 h-12 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity"
               >
                 <span className="text-white text-sm font-semibold">{userName.charAt(0).toUpperCase()}</span>
               </button>

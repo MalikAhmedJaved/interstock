@@ -49,14 +49,14 @@ const DesktopLayout = ({ children, activePath }) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-72 sm:w-80 transform transition-transform duration-300 ease-in-out
-          lg:relative lg:translate-x-0 lg:z-auto
+          fixed left-0 top-0 z-50 w-72 sm:w-80 transform transition-transform duration-300 ease-in-out
+          lg:inset-y-0 lg:relative lg:translate-x-0 lg:z-auto
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          py-4 pl-4 sm:pl-6 pr-2 overflow-y-auto
+          py-4 pl-4 sm:pl-6 pr-2 overflow-y-auto max-h-screen lg:max-h-none
         `}
       >
         <div
-          className="bg-white rounded-3xl lg:rounded-[40px] p-6 sm:p-8 flex flex-col gap-4 min-h-full"
+          className="bg-white rounded-3xl lg:rounded-[40px] p-6 sm:p-8 flex flex-col gap-4 lg:min-h-full"
           style={{ boxShadow: '0 0 14px rgba(0,0,0,0.1)' }}
         >
           {/* Close button on mobile */}
