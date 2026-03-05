@@ -15,6 +15,7 @@ app.use('/api/auth', require('./routes/auth'))
 app.use('/api/student', require('./routes/student'))
 app.use('/api/chat', require('./routes/chat'))
 app.use('/api/chatbot', require('./routes/chatbot'))
+app.use('/api/stocks', require('./routes/stocks'))
 
 // Health check
 app.get('/api/health', (req, res) => {

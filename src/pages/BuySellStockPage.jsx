@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import {
   ArrowLeft,
   ChevronRight,
   X,
+  Loader2,
 } from 'lucide-react'
 import StockLogo from '../components/StockLogo'
 import DesktopLayout from '../components/DesktopLayout'
+import { API_ENDPOINTS } from '../config/api'
 
 // Action tabs
 const actionTabs = [
@@ -16,8 +18,8 @@ const actionTabs = [
   { label: 'Buy to Cover', value: 'cover' },
 ]
 
-// Available stocks for asset selector
-const availableStocks = [
+// Fallback available stocks (used while live data loads)
+const fallbackStocks = [
   { symbol: 'AMD', name: 'Advanced Micro Devices', price: 72.21 },
   { symbol: 'ABNB', name: 'Airbnb, Inc.', price: 107.81 },
   { symbol: 'AMZN', name: 'Amazon.com, Inc.', price: 100.78 },
@@ -40,12 +42,56 @@ const BuySellStockPage = () => {
   const [selectedStock, setSelectedStock] = useState(
     stockFromState
       ? { symbol: stockFromState.symbol, name: stockFromState.name || '', price: stockFromState.price || 0 }
-      : availableStocks[0]
+      : fallbackStocks[0]
   )
   const [amount, setAmount] = useState('100.00')
   const [quantity, setQuantity] = useState('25')
   const [assetSelectorOpen, setAssetSelectorOpen] = useState(false)
   const [orderPreviewOpen, setOrderPreviewOpen] = useState(false)
+
+  // ─── Live data state ───
+  const [availableStocks, setAvailableStocks] = useState(fallbackStocks)
+  const [stocksLoading, setStocksLoading] = useState(true)
+
+  // Fetch live prices for the asset selector
+  useEffect(() => {
+    const fetchStocks = async () => {
+      try {
+        const symbols = fallbackStocks.map(s => s.symbol).join(',')
+        const res = await fetch(`${API_ENDPOINTS.STOCKS.QUOTES}?symbols=${symbols}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.length > 0) {
+            setAvailableStocks(data)
+            // If selected stock matches, update its price
+            const updated = data.find(s => s.symbol === selectedStock.symbol)
+            if (updated) setSelectedStock(prev => ({ ...prev, price: updated.price, name: updated.name }))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch stock prices:', err)
+      } finally {
+        setStocksLoading(false)
+      }
+    }
+    fetchStocks()
+  }, [])
+
+  // Refresh selected stock price when it changes
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.STOCKS.QUOTE(selectedStock.symbol))
+        if (res.ok) {
+          const data = await res.json()
+          setSelectedStock(prev => ({ ...prev, price: data.price, name: data.name }))
+        }
+      } catch (err) {
+        // Keep existing price
+      }
+    }
+    fetchPrice()
+  }, [selectedStock.symbol])
 
   const availableBalance = 267.90
 

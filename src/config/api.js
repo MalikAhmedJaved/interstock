@@ -23,6 +23,13 @@ export const API_ENDPOINTS = {
   CHATBOT: {
     MESSAGE: `${API_BASE_URL}/chatbot/message`,
     HISTORY: `${API_BASE_URL}/chatbot/history`,
+  },
+  STOCKS: {
+    QUOTE: (symbol) => `${API_BASE_URL}/stocks/quote/${symbol}`,
+    QUOTES: `${API_BASE_URL}/stocks/quotes`,
+    TRENDING: `${API_BASE_URL}/stocks/trending`,
+    SEARCH: `${API_BASE_URL}/stocks/search`,
+    HISTORY: (symbol) => `${API_BASE_URL}/stocks/history/${symbol}`,
   }
 }
 

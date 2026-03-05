@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -11,18 +11,20 @@ import {
   Upload,
   X,
   ChevronRight,
+  Loader2,
 } from 'lucide-react'
 import StockLogo from '../components/StockLogo'
 import OptionsTradeModal from '../components/OptionsTradeModal'
 import DesktopLayout from '../components/DesktopLayout'
+import { API_ENDPOINTS } from '../config/api'
 
-// Trending stocks data
-const trendingStocks = [
+// Fallback trending stocks (used while loading)
+const fallbackTrendingStocks = [
   { symbol: 'AMD', price: 72.21, change: 5.79, isPositive: false },
   { symbol: 'ABNB', price: 107.81, change: 1.59, isPositive: true },
   { symbol: 'AMZN', price: 100.78, change: 4.40, isPositive: true },
-  { symbol: 'AMD', price: 72.21, change: 5.79, isPositive: false },
-  { symbol: 'ABNB', price: 107.81, change: 1.59, isPositive: true },
+  { symbol: 'AAPL', price: 175.50, change: 2.50, isPositive: true },
+  { symbol: 'TSLA', price: 248.50, change: 2.80, isPositive: false },
 ]
 
 // Assets data
@@ -45,10 +47,9 @@ const assets = [
   },
 ]
 
-// All searchable stocks
-const allStocks = [
-  { symbol: 'APPL', name: 'Apple, Inc.', price: 149.66, change: 2.05, isPositive: true },
-  { symbol: 'APPS', name: 'Digital Turbine, Inc.', price: 19.63, change: 1.42, isPositive: true },
+// All searchable stocks - will be populated from live API
+const fallbackAllStocks = [
+  { symbol: 'AAPL', name: 'Apple Inc.', price: 175.50, change: 2.50, isPositive: true },
   { symbol: 'AMD', name: 'Advanced Micro Devices', price: 72.21, change: 5.79, isPositive: false },
   { symbol: 'ABNB', name: 'Airbnb, Inc.', price: 107.81, change: 1.59, isPositive: true },
   { symbol: 'AMZN', name: 'Amazon.com, Inc.', price: 100.78, change: 4.40, isPositive: true },
@@ -145,13 +146,68 @@ const ListingPage = () => {
   const [selectedOption, setSelectedOption] = useState(null)
   const searchInputRef = useRef(null)
 
-  const filteredStocks = searchQuery.trim()
-    ? allStocks.filter(
-        (s) =>
-          s.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : []
+  // ─── Live data state ───
+  const [trendingStocks, setTrendingStocks] = useState(fallbackTrendingStocks)
+  const [trendingLoading, setTrendingLoading] = useState(true)
+  const [searchResults, setSearchResults] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+
+  // Fetch trending stocks on mount
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const res = await fetch(API_ENDPOINTS.STOCKS.TRENDING)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.length > 0) setTrendingStocks(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch trending stocks:', err)
+      } finally {
+        setTrendingLoading(false)
+      }
+    }
+    fetchTrending()
+  }, [])
+
+  // Live search with debounce
+  const searchTimeoutRef = useRef(null)
+  const handleSearchChange = useCallback((e) => {
+    const query = e.target.value
+    setSearchQuery(query)
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+
+    if (!query.trim()) {
+      setSearchResults([])
+      setSearchLoading(false)
+      return
+    }
+
+    setSearchLoading(true)
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_ENDPOINTS.STOCKS.SEARCH}?q=${encodeURIComponent(query)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setSearchResults(data)
+        }
+      } catch (err) {
+        console.error('Search error:', err)
+        // Fallback to local search
+        const filtered = fallbackAllStocks.filter(
+          (s) =>
+            s.symbol.toLowerCase().includes(query.toLowerCase()) ||
+            s.name.toLowerCase().includes(query.toLowerCase())
+        )
+        setSearchResults(filtered)
+      } finally {
+        setSearchLoading(false)
+      }
+    }, 400)
+  }, [])
+
+  const filteredStocks = searchQuery.trim() ? searchResults : []
 
   useEffect(() => {
     if (searchOpen && searchInputRef.current) {
@@ -207,7 +263,7 @@ const ListingPage = () => {
                   ref={searchInputRef}
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   placeholder="Search stocks..."
                   className="flex-1 text-base sm:text-lg text-gray-900 outline-none bg-transparent placeholder:text-gray-400"
                 />
@@ -218,7 +274,14 @@ const ListingPage = () => {
             </div>
 
             {/* Results */}
-            {filteredStocks.length > 0 && (
+            {searchLoading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <span className="ml-2 text-gray-500">Searching...</span>
+              </div>
+            )}
+
+            {!searchLoading && filteredStocks.length > 0 && (
               <div className="flex flex-col gap-2">
                 <p className="text-base sm:text-lg text-gray-900 font-normal">Symbols</p>
                 <div className="flex flex-col gap-2 sm:gap-3 max-h-[60vh] overflow-y-auto">
@@ -251,7 +314,7 @@ const ListingPage = () => {
               </div>
             )}
 
-            {searchQuery.trim() && filteredStocks.length === 0 && (
+            {!searchLoading && searchQuery.trim() && filteredStocks.length === 0 && (
               <p className="text-center text-gray-400 py-4">No stocks found for &quot;{searchQuery}&quot;</p>
             )}
           </div>
@@ -563,7 +626,12 @@ const ListingPage = () => {
           {/* Trending Stocks */}
           <section className="mb-8 sm:mb-16">
             <div className="flex items-center justify-between mb-4 sm:mb-5">
-              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">Trending Stocks</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">Trending Stocks</h3>
+                {!trendingLoading && (
+                  <span className="bg-green-100 text-green-700 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full">LIVE</span>
+                )}
+              </div>
               <button
                 onClick={() => navigate('/stock-details')}
                 className="text-primary font-medium text-base sm:text-lg hover:underline"
@@ -581,7 +649,7 @@ const ListingPage = () => {
                   <StockLogo symbol={stock.symbol} size="md" />
                   <p className="text-gray-900 text-sm sm:text-base font-normal">{stock.symbol}</p>
                   <div className="flex items-center gap-2 sm:gap-4">
-                    <span className="text-gray-500 text-xs sm:text-sm">${stock.price}</span>
+                    <span className="text-gray-500 text-xs sm:text-sm">${typeof stock.price === 'number' ? stock.price.toFixed(2) : stock.price}</span>
                     <div className="flex items-center gap-1">
                       {stock.isPositive ? (
                         <ArrowUpCircle size={16} className="text-stock-green sm:w-[18px] sm:h-[18px]" fill="#45B369" stroke="white" />

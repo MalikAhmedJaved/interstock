@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowUpCircle,
+  ArrowDownCircle,
   ChevronDown,
   ChevronRight,
   X,
+  Loader2,
 } from 'lucide-react'
 import {
   LineChart,
@@ -18,11 +20,19 @@ import {
 } from 'recharts'
 import StockLogo from '../components/StockLogo'
 import DesktopLayout from '../components/DesktopLayout'
+import { API_ENDPOINTS } from '../config/api'
 
-// Time period tabs
-const timePeriods = ['24H', '7D', '1M', '3M', '1Y', 'ALL']
+// Time period tabs → mapped to Yahoo Finance ranges + intervals
+const timePeriods = [
+  { label: '24H', range: '1d', interval: '5m' },
+  { label: '7D', range: '5d', interval: '15m' },
+  { label: '1M', range: '1mo', interval: '1d' },
+  { label: '3M', range: '3mo', interval: '1d' },
+  { label: '1Y', range: '1y', interval: '1wk' },
+  { label: 'ALL', range: 'max', interval: '1mo' },
+]
 
-// Stock data lookup
+// Fallback stock data lookup (used if API fails)
 const stockDataLookup = {
   AFRM: {
     symbol: 'AFRM', name: 'Affirm Holdings, Inc.', price: 18.20, change: 11.78, isPositive: true,
@@ -51,52 +61,119 @@ const stockDataLookup = {
   },
 }
 
-// Chart data
-const generateChartData = () => [
-  { time: '08:00', price: 17.10 }, { time: '08:30', price: 17.05 },
-  { time: '09:00', price: 17.20 }, { time: '09:30', price: 17.35 },
-  { time: '10:00', price: 17.40 }, { time: '10:30', price: 17.25 },
-  { time: '11:00', price: 17.56 }, { time: '11:30', price: 17.30 },
-  { time: '12:00', price: 17.15 },
-]
-
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
+    const val = payload[0].value
     return (
       <div className="bg-black text-white rounded-md px-3 py-2 shadow-lg">
-        <p className="text-base sm:text-lg font-medium">${payload[0].value}</p>
-        <p className="text-stock-green text-xs sm:text-sm">+3.45% (+0.05%)</p>
+        <p className="text-base sm:text-lg font-medium">${val.toFixed(2)}</p>
       </div>
     )
   }
   return null
 }
 
+// Format large numbers
+function formatVolume(vol) {
+  if (!vol) return '0'
+  if (vol >= 1_000_000) return (vol / 1_000_000).toFixed(1) + 'M'
+  if (vol >= 1_000) return (vol / 1_000).toFixed(0) + 'K'
+  return vol.toLocaleString()
+}
+
+// Format chart time labels
+function formatTimeLabel(dateStr, range) {
+  const d = new Date(dateStr)
+  if (range === '1d' || range === '5d') {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+  if (range === '1mo' || range === '3mo') {
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+  }
+  return d.toLocaleDateString([], { month: 'short', year: '2-digit' })
+}
+
 const StockDetailsPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const [activePeriod, setActivePeriod] = useState('24H')
+  const [activePeriod, setActivePeriod] = useState(timePeriods[0])
   const [actionsOpen, setActionsOpen] = useState(false)
   const [orderTypeOpen, setOrderTypeOpen] = useState(false)
   const [selectedAction, setSelectedAction] = useState('Buy')
   const [selectedOrderType, setSelectedOrderType] = useState('Market')
 
   const stockFromState = location.state?.stock
-  const stockSymbol = stockFromState?.symbol || 'AFRM'
+  const stockSymbol = stockFromState?.symbol || 'AAPL'
 
-  const stock = stockDataLookup[stockSymbol] || {
-    symbol: stockSymbol, name: stockFromState?.name || 'Unknown',
-    price: stockFromState?.price || 0, change: stockFromState?.change || 0,
-    isPositive: stockFromState?.isPositive ?? true,
-    previousClose: (stockFromState?.price * 0.98)?.toFixed(2) || '0.00',
-    open: (stockFromState?.price * 0.99)?.toFixed(2) || '0.00',
-    bid: `${(stockFromState?.price * 0.995)?.toFixed(2) || '0.00'} x 1000`,
-    ask: `${(stockFromState?.price * 1.005)?.toFixed(2) || '0.00'} x 1100`,
-    daysRange: `${(stockFromState?.price * 0.97)?.toFixed(2) || '0.00'} - ${(stockFromState?.price * 1.01)?.toFixed(2) || '0.00'}`,
-    volume: '5,654,321',
-  }
+  // ─── Live data state ───
+  const [stock, setStock] = useState(() => {
+    const fallback = stockDataLookup[stockSymbol]
+    if (fallback) return fallback
+    return {
+      symbol: stockSymbol, name: stockFromState?.name || 'Loading...',
+      price: stockFromState?.price || 0, change: stockFromState?.change || 0,
+      isPositive: stockFromState?.isPositive ?? true,
+      previousClose: '—', open: '—', bid: '—', ask: '—', daysRange: '—', volume: '—',
+    }
+  })
+  const [chartData, setChartData] = useState([])
+  const [chartLoading, setChartLoading] = useState(true)
+  const [quoteLoading, setQuoteLoading] = useState(true)
 
-  const chartData = generateChartData()
+  // Fetch live quote
+  useEffect(() => {
+    const fetchQuote = async () => {
+      setQuoteLoading(true)
+      try {
+        const res = await fetch(API_ENDPOINTS.STOCKS.QUOTE(stockSymbol))
+        if (res.ok) {
+          const data = await res.json()
+          setStock({
+            symbol: data.symbol,
+            name: data.name,
+            price: data.price,
+            change: Math.abs(data.change),
+            isPositive: data.isPositive,
+            previousClose: data.previousClose?.toFixed(2) || '—',
+            open: data.open?.toFixed(2) || '—',
+            bid: data.bid ? `${data.bid.toFixed(2)} x ${data.bidSize || '—'}` : '—',
+            ask: data.ask ? `${data.ask.toFixed(2)} x ${data.askSize || '—'}` : '—',
+            daysRange: data.dayLow && data.dayHigh ? `${data.dayLow.toFixed(2)} - ${data.dayHigh.toFixed(2)}` : '—',
+            volume: formatVolume(data.volume),
+          })
+        }
+      } catch (err) {
+        console.error('Failed to fetch quote:', err)
+      } finally {
+        setQuoteLoading(false)
+      }
+    }
+    fetchQuote()
+  }, [stockSymbol])
+
+  // Fetch chart data when period changes
+  useEffect(() => {
+    const fetchChart = async () => {
+      setChartLoading(true)
+      try {
+        const url = `${API_ENDPOINTS.STOCKS.HISTORY(stockSymbol)}?range=${activePeriod.range}&interval=${activePeriod.interval}`
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          const formatted = (data.quotes || []).map(q => ({
+            time: formatTimeLabel(q.time, activePeriod.range),
+            price: q.price,
+          }))
+          setChartData(formatted)
+        }
+      } catch (err) {
+        console.error('Failed to fetch chart:', err)
+      } finally {
+        setChartLoading(false)
+      }
+    }
+    fetchChart()
+  }, [stockSymbol, activePeriod])
 
   const overviewItems = [
     { label: 'Previous Close', value: stock.previousClose },
@@ -126,11 +203,24 @@ const StockDetailsPage = () => {
           </div>
         </div>
         <div className="text-right">
-          <p className="text-xl sm:text-2xl text-gray-900">${stock.price}</p>
-          <div className="flex items-center gap-1.5 justify-end">
-            <ArrowUpCircle size={18} className="text-stock-green sm:w-5 sm:h-5" fill="#45B369" stroke="white" />
-            <span className="text-stock-green text-base sm:text-lg">{stock.change}%</span>
-          </div>
+          {quoteLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400 ml-auto" />
+          ) : (
+            <>
+              <p className="text-xl sm:text-2xl text-gray-900">${typeof stock.price === 'number' ? stock.price.toFixed(2) : stock.price}</p>
+              <div className="flex items-center gap-1.5 justify-end">
+                {stock.isPositive ? (
+                  <ArrowUpCircle size={18} className="text-stock-green sm:w-5 sm:h-5" fill="#45B369" stroke="white" />
+                ) : (
+                  <ArrowDownCircle size={18} className="text-stock-red sm:w-5 sm:h-5" fill="#EF4770" stroke="white" />
+                )}
+                <span className={`text-base sm:text-lg ${stock.isPositive ? 'text-stock-green' : 'text-stock-red'}`}>
+                  {stock.change}%
+                </span>
+                <span className="bg-green-100 text-green-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1">LIVE</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -138,30 +228,39 @@ const StockDetailsPage = () => {
       <div className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl p-1 flex items-center mb-6 sm:mb-8 overflow-x-auto">
         {timePeriods.map((period) => (
           <button
-            key={period}
+            key={period.label}
             onClick={() => setActivePeriod(period)}
             className={`flex-1 py-2.5 sm:py-3 text-center text-sm sm:text-base rounded-xl sm:rounded-2xl transition-all min-w-[48px] ${
-              activePeriod === period
+              activePeriod.label === period.label
                 ? 'bg-gray-50 text-black font-medium shadow-sm'
                 : 'text-gray-400'
             }`}
           >
-            {period}
+            {period.label}
           </button>
         ))}
       </div>
 
       {/* Chart */}
       <div className="bg-white rounded-2xl sm:rounded-[30px] p-4 sm:p-8 mb-6 sm:mb-10 overflow-hidden">
-        <ResponsiveContainer width="100%" height={250} className="sm:!h-[350px]">
-          <LineChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 5 }}>
-            <XAxis dataKey="time" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
-            <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} tickFormatter={(v) => v.toFixed(2)} />
-            <ReferenceLine y={17.2} stroke="#E5E7EB" strokeDasharray="4 4" />
-            <Tooltip content={<CustomTooltip />} />
-            <Line type="monotone" dataKey="price" stroke="#45B369" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#45B369', stroke: 'white', strokeWidth: 2 }} />
-          </LineChart>
-        </ResponsiveContainer>
+        {chartLoading ? (
+          <div className="flex items-center justify-center h-[250px] sm:h-[350px]">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : chartData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={250} className="sm:!h-[350px]">
+            <LineChart data={chartData} margin={{ top: 20, right: 10, left: 0, bottom: 5 }}>
+              <XAxis dataKey="time" stroke="#9CA3AF" fontSize={10} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+              <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} domain={['auto', 'auto']} tickFormatter={(v) => v.toFixed(2)} />
+              <Tooltip content={<CustomTooltip />} />
+              <Line type="monotone" dataKey="price" stroke={stock.isPositive ? '#45B369' : '#EF4770'} strokeWidth={2} dot={false} activeDot={{ r: 5, fill: stock.isPositive ? '#45B369' : '#EF4770', stroke: 'white', strokeWidth: 2 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-[250px] sm:h-[350px] text-gray-400">
+            No chart data available
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
