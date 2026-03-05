@@ -1,25 +1,55 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MessageCircle, User, Search } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { API_ENDPOINTS } from '../config/api'
 
 const NewChatPage = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
+  const [students, setStudents] = useState([])
 
-  // List of available students (excluding current user)
-  const allStudents = ['Jawad', 'Ayesha', 'Maha', 'Sheema']
-  const availableStudents = allStudents.filter(student => student !== user?.name)
+  useEffect(() => {
+    let mounted = true
+
+    const loadUsers = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) return
+
+        const response = await fetch(API_ENDPOINTS.CHAT.USERS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await response.json()
+
+        if (mounted && response.ok && data.success) {
+          setStudents(data.users || [])
+        }
+      } catch {
+        if (mounted) {
+          setStudents([])
+        }
+      }
+    }
+
+    loadUsers()
+
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   // Filter students based on search term
-  const filteredStudents = availableStudents.filter(student =>
-    student.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStudents = students.filter(student =>
+    student.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const handleStudentClick = (studentName) => {
+  const handleStudentClick = (student) => {
     // Navigate to chat with the selected student
-    navigate('/chat-room-details', { state: { contactName: studentName } })
+    navigate('/chat-room-details', { state: { contactName: student.name, contactId: student._id } })
   }
 
   return (
@@ -47,7 +77,7 @@ const NewChatPage = () => {
         {filteredStudents.length > 0 ? (
           filteredStudents.map((student) => (
             <div
-              key={student}
+              key={student._id}
               onClick={() => handleStudentClick(student)}
               className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
             >
@@ -56,7 +86,7 @@ const NewChatPage = () => {
                   <User size={24} className="text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{student}</h3>
+                  <h3 className="font-semibold">{student.name}</h3>
                   <p className="text-sm text-text-secondary-light">Tap to start a conversation</p>
                 </div>
                 <MessageCircle size={20} className="text-text-secondary-light" />

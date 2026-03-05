@@ -6,8 +6,6 @@ import MainLayout from '../components/MainLayout'
 import OnboardingPage from '../pages/OnboardingPage'
 import LoginPage from '../pages/LoginPage'
 import RegisterEmailPage from '../pages/RegisterEmailPage'
-import CreatePasswordPage from '../pages/CreatePasswordPage'
-import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 
 // Main Pages
 import HomePage from '../pages/HomePage'
@@ -80,8 +78,6 @@ const AppRouter = () => {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register-email" element={<RegisterEmailPage />} />
-      <Route path="/create-password" element={<CreatePasswordPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
       {/* Protected Routes with Main Layout */}
       <Route path="/home" element={<MainLayout><HomePage /></MainLayout>} />

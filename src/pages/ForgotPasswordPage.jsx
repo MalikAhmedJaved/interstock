@@ -9,8 +9,6 @@ const ForgotPasswordPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // Handle password reset
-    alert('Password reset link sent to your email')
     navigate('/login')
   }
 
@@ -19,7 +17,7 @@ const ForgotPasswordPage = () => {
       <div className="max-w-md mx-auto">
         <h2 className="text-2xl font-medium font-orbitron mb-2">Forgot Password</h2>
         <p className="text-text-secondary-light mb-8">
-          Enter your email and we'll send you a reset link
+          This feature is currently disabled. Please contact admin.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -33,7 +31,7 @@ const ForgotPasswordPage = () => {
           />
 
           <Button type="submit" className="w-full">
-            Send Reset Link
+            Back to Login
           </Button>
         </form>
 

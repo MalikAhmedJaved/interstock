@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { FileText, Calendar, Clock, Upload, AlertCircle, CheckCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
@@ -8,6 +8,7 @@ import { isAssignmentSubmitted, submitAssignment, getSubmissionDate } from '../u
 
 const AssignmentDetailPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const { user } = useAuth()
   const [file, setFile] = useState(null)
@@ -21,6 +22,19 @@ const AssignmentDetailPage = () => {
   const assignments = assignmentsData
 
   useEffect(() => {
+    const stateAssignment = location.state?.assignment
+    if (stateAssignment) {
+      setAssignment(stateAssignment)
+      const today = new Date()
+      const deadlineDate = new Date(stateAssignment.deadline + ' ' + stateAssignment.time)
+      setIsLate(today > deadlineDate)
+      if (stateAssignment.isRemote) {
+        setIsSubmitted(false)
+        setSubmissionDate(null)
+        return
+      }
+    }
+
     const assignmentId = parseInt(id)
     const foundAssignment = assignments.find(a => a.id === assignmentId)
     if (foundAssignment) {
@@ -37,7 +51,7 @@ const AssignmentDetailPage = () => {
         setSubmissionDate(getSubmissionDate(assignmentId))
       }
     }
-  }, [id])
+  }, [id, location.state])
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0])
@@ -45,6 +59,10 @@ const AssignmentDetailPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (assignment?.isRemote) {
+      alert('Viewing teacher uploaded assignment. Submission from student panel is not enabled here yet.')
+      return
+    }
     if (isSubmitted) {
       alert('This assignment has already been submitted. You cannot submit it again.')
       return
@@ -107,7 +125,7 @@ const AssignmentDetailPage = () => {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-text-primary-dark">
           ← Back

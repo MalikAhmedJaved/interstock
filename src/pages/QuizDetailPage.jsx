@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { BookOpen, Calendar, Clock, AlertCircle, Trophy } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
@@ -7,6 +7,7 @@ import { getQuizzesWithDuration } from '../data/quizzesData'
 
 const QuizDetailPage = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
   const { user } = useAuth()
   const [quiz, setQuiz] = useState(null)
@@ -18,6 +19,22 @@ const QuizDetailPage = () => {
   const quizzes = getQuizzesWithDuration()
 
   useEffect(() => {
+    const stateQuiz = location.state?.quiz
+    if (stateQuiz) {
+      const normalizedQuiz = {
+        ...stateQuiz,
+        duration: stateQuiz.rawDuration || stateQuiz.time || `${stateQuiz.questions || 10} min`,
+      }
+      setQuiz(normalizedQuiz)
+      const today = new Date()
+      const deadlineDate = new Date((stateQuiz.deadline || '2099-12-31') + ' ' + (stateQuiz.time || '11:59 PM'))
+      setIsLate(today > deadlineDate)
+      if (stateQuiz.isRemote) {
+        setQuizAttempt(null)
+        return
+      }
+    }
+
     const foundQuiz = quizzes.find(q => q.id === parseInt(id))
     if (foundQuiz) {
       setQuiz(foundQuiz)
@@ -31,7 +48,7 @@ const QuizDetailPage = () => {
       const attempt = attempts.find(a => a.quizId === foundQuiz.id)
       setQuizAttempt(attempt || null)
     }
-  }, [id])
+  }, [id, location.state])
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -84,10 +101,10 @@ const QuizDetailPage = () => {
   }
 
   const daysLeft = getDaysUntilDeadline(quiz.deadline, quiz.time)
-  const canTakeQuiz = !isLate && !quizAttempt
+  const canTakeQuiz = !isLate && !quizAttempt && !quiz?.isRemote
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/home')} className="text-text-primary-dark">
           ← Back
@@ -215,7 +232,7 @@ const QuizDetailPage = () => {
                 }
               }}
             >
-              {isLate ? "You're Late - Cannot Take Quiz" : 'Start Quiz'}
+              {quiz?.isRemote ? 'Teacher uploaded quiz is visible here' : isLate ? "You're Late - Cannot Take Quiz" : 'Start Quiz'}
             </Button>
           )}
         </div>

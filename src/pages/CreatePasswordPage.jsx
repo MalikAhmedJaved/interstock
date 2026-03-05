@@ -29,7 +29,7 @@ const CreatePasswordPage = () => {
       <div className="max-w-md mx-auto">
         <h2 className="text-2xl font-medium font-orbitron mb-2">Create Password</h2>
         <p className="text-text-secondary-light mb-8">
-          Create a strong password for your account
+          Password reset via email is currently disabled.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">

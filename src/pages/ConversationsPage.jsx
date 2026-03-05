@@ -1,18 +1,49 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, MessageCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { API_ENDPOINTS } from '../config/api'
 
 const ConversationsPage = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isActive = user?.isActive !== false
+  const [conversations, setConversations] = useState([])
+  const unreadCount = conversations.filter((conv) => conv.hasUnread).length
 
-  const conversations = [
-    { id: 1, name: 'Jawad', lastMessage: 'Hey, how are you?', time: '10:30 AM' },
-    { id: 2, name: 'Ayesha', lastMessage: 'Thanks for the tip!', time: 'Yesterday' },
-    { id: 3, name: 'Maha', lastMessage: 'Great analysis on that stock!', time: '2 hours ago' },
-    { id: 4, name: 'Sheema', lastMessage: 'Can you share your trading strategy?', time: '5 hours ago' },
-  ]
+  useEffect(() => {
+    let mounted = true
+
+    const loadConversations = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) return
+
+        const response = await fetch(API_ENDPOINTS.CHAT.CONVERSATIONS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        const data = await response.json()
+        if (mounted && response.ok && data.success) {
+          setConversations(data.conversations || [])
+        }
+      } catch {
+        if (mounted) {
+          setConversations([])
+        }
+      }
+    }
+
+    loadConversations()
+    const intervalId = setInterval(loadConversations, 5000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -22,6 +53,11 @@ const ConversationsPage = () => {
             ← Back
           </button>
           <h2 className="text-2xl font-bold font-orbitron">Conversations</h2>
+          {unreadCount > 0 && (
+            <span className="px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs font-semibold">
+              {unreadCount} new
+            </span>
+          )}
         </div>
         {isActive && (
           <button
@@ -47,7 +83,11 @@ const ConversationsPage = () => {
         {conversations.map((conv) => (
           <div
             key={conv.id}
-            onClick={() => navigate('/chat-room-details', { state: { contactName: conv.name } })}
+            onClick={() =>
+              navigate('/chat-room-details', {
+                state: { contactName: conv.name, contactId: conv.otherUserId },
+              })
+            }
             className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
           >
             <div className="flex items-center gap-4">
@@ -55,13 +95,22 @@ const ConversationsPage = () => {
                 <MessageCircle size={24} className="text-gray-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold">{conv.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">{conv.name}</h3>
+                  {conv.hasUnread && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                </div>
                 <p className="text-sm text-text-secondary-light">{conv.lastMessage}</p>
               </div>
               <span className="text-xs text-text-secondary-light">{conv.time}</span>
             </div>
           </div>
         ))}
+
+        {conversations.length === 0 && (
+          <div className="card p-6 text-center text-text-secondary-light">
+            No conversations yet. Start a new chat.
+          </div>
+        )}
       </div>
     </div>
   )

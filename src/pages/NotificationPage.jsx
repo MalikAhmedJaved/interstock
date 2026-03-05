@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
+import { API_ENDPOINTS } from '../config/api'
 
 const NotificationPage = () => {
   const navigate = useNavigate()
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+  const [notifications, setNotifications] = useState([])
 
   useEffect(() => {
     // Load saved preference from localStorage
@@ -14,10 +16,32 @@ const NotificationPage = () => {
     }
   }, [])
 
-  const notifications = [
-    { id: 1, title: 'New Quiz Available', message: 'Stock Market Basics quiz is now available', time: '2 hours ago', type: 'quiz' },
-    { id: 2, title: 'Assignment Due', message: 'Your assignment is due tomorrow', time: '5 hours ago', type: 'assignment' },
-  ]
+  useEffect(() => {
+    let mounted = true
+
+    const loadNotifications = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.STUDENT.NOTIFICATIONS)
+        const data = await response.json()
+
+        if (mounted && data.success && Array.isArray(data.notifications)) {
+          setNotifications(data.notifications)
+        }
+      } catch {
+        if (mounted) {
+          setNotifications([])
+        }
+      }
+    }
+
+    loadNotifications()
+    const intervalId = setInterval(loadNotifications, 10000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
 
   const handleNotificationClick = (notification) => {
     if (notification.type === 'quiz') {
@@ -70,7 +94,7 @@ const NotificationPage = () => {
       </div>
 
       <div className="space-y-3">
-        {notifications.map((notification) => (
+        {notificationsEnabled && notifications.map((notification) => (
           <div 
             key={notification.id} 
             className="card p-4 cursor-pointer hover:shadow-md transition-shadow"
@@ -88,6 +112,9 @@ const NotificationPage = () => {
             </div>
           </div>
         ))}
+        {notificationsEnabled && notifications.length === 0 && (
+          <div className="card p-6 text-center text-text-secondary-light">No notifications yet</div>
+        )}
       </div>
     </div>
   )

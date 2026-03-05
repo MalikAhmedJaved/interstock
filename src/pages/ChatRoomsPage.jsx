@@ -1,19 +1,85 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MessageCircle, Users, AlertCircle } from 'lucide-react'
+import { MessageCircle, Users, AlertCircle, Plus } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { API_ENDPOINTS } from '../config/api'
 
 const ChatRoomsPage = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const isActive = user?.isActive !== false
+  const [chatRooms, setChatRooms] = useState([])
+  const [creatingRoom, setCreatingRoom] = useState(false)
 
-  const chatRooms = [
-    { id: 1, name: 'Trading Discussion', members: 25, lastMessage: 'Great analysis!' },
-    { id: 2, name: 'Stock Tips', members: 42, lastMessage: 'Check out AAPL' },
-  ]
+  useEffect(() => {
+    let mounted = true
+
+    const loadRooms = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) return
+
+        const response = await fetch(API_ENDPOINTS.CHAT.ROOMS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await response.json()
+
+        if (mounted && response.ok && data.success) {
+          setChatRooms(data.rooms || [])
+        }
+      } catch {
+        if (mounted) {
+          setChatRooms([])
+        }
+      }
+    }
+
+    loadRooms()
+    const intervalId = setInterval(loadRooms, 5000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
+
+  const handleCreateRoom = async () => {
+    if (!isActive || creatingRoom) return
+
+    const roomName = window.prompt('Enter chat room name')
+    if (!roomName || !roomName.trim()) return
+
+    try {
+      setCreatingRoom(true)
+      const token = localStorage.getItem('authToken')
+      if (!token) return
+
+      const response = await fetch(API_ENDPOINTS.CHAT.ROOMS, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: roomName.trim() }),
+      })
+      const data = await response.json()
+
+      if (response.ok && data.success && data.room) {
+        setChatRooms((prev) => [data.room, ...prev])
+      } else {
+        alert(data.message || 'Failed to create room')
+      }
+    } catch {
+      alert('Failed to create room')
+    } finally {
+      setCreatingRoom(false)
+    }
+  }
 
   const handleRoomClick = (room) => {
-    navigate('/chat-room-details', { state: { roomName: room.name, isChatRoom: true } })
+    navigate('/chat-room-details', { state: { roomName: room.name, roomId: room.id, isChatRoom: true } })
   }
 
   return (
@@ -23,6 +89,15 @@ const ChatRoomsPage = () => {
           ← Back
         </button>
         <h2 className="text-2xl font-bold font-orbitron">Chat Rooms</h2>
+        {isActive && (
+          <button
+            onClick={handleCreateRoom}
+            className="ml-auto w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center"
+            title="Create Room"
+          >
+            <Plus size={20} />
+          </button>
+        )}
       </div>
 
       {!isActive && (
@@ -51,12 +126,19 @@ const ChatRoomsPage = () => {
                 <div className="flex items-center gap-2 mt-1 text-text-secondary-light text-sm">
                   <Users size={14} />
                   <span>{room.members} members</span>
+                  {room.hasUnread && <span className="w-2 h-2 rounded-full bg-red-500" />}
                 </div>
                 <p className="text-sm text-text-secondary-light mt-1">{room.lastMessage}</p>
               </div>
             </div>
           </div>
         ))}
+
+        {chatRooms.length === 0 && (
+          <div className="card p-6 text-center text-text-secondary-light">
+            No chat rooms yet. Create one to add all registered students.
+          </div>
+        )}
       </div>
     </div>
   )

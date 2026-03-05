@@ -35,9 +35,13 @@ const RegisterEmailPage = () => {
 
   const validateForm = () => {
     const newErrors = {}
+    const nameRegex = /^[A-Za-z\s.'-]+$/
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required'
+    } else if (!nameRegex.test(formData.name.trim())) {
+      newErrors.name = 'Full name must contain letters only (numbers are not allowed)'
     }
 
     if (!formData.email.trim()) {
@@ -54,8 +58,8 @@ const RegisterEmailPage = () => {
 
     if (!formData.password) {
       newErrors.password = 'Password is required'
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
+    } else if (!strongPasswordRegex.test(formData.password)) {
+      newErrors.password = 'Password must be at least 8 characters with uppercase, lowercase, and number'
     }
 
     if (!formData.confirmPassword) {

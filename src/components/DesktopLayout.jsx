@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Bell, RefreshCw, Menu, X, Settings, LogOut, User } from 'lucide-react'
+import { API_ENDPOINTS } from '../config/api'
 
 // Sidebar navigation items
 const sidebarNavItems = [
@@ -23,6 +24,8 @@ const DesktopLayout = ({ children, activePath }) => {
   const userName = user?.name || 'User'
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [unreadConversations, setUnreadConversations] = useState(0)
+  const [unreadRooms, setUnreadRooms] = useState(0)
   const profileMenuRef = useRef(null)
   const currentPath = activePath || location.pathname
 
@@ -34,6 +37,76 @@ const DesktopLayout = ({ children, activePath }) => {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadUnreadRooms = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) return
+
+        const response = await fetch(API_ENDPOINTS.CHAT.ROOMS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await response.json()
+
+        if (mounted && response.ok && data.success && Array.isArray(data.rooms)) {
+          const unread = data.rooms.filter((room) => room.hasUnread).length
+          setUnreadRooms(unread)
+        }
+      } catch {
+        if (mounted) {
+          setUnreadRooms(0)
+        }
+      }
+    }
+
+    loadUnreadRooms()
+    const intervalId = setInterval(loadUnreadRooms, 5000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadUnreadCount = async () => {
+      try {
+        const token = localStorage.getItem('authToken')
+        if (!token) return
+
+        const response = await fetch(API_ENDPOINTS.CHAT.CONVERSATIONS, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        const data = await response.json()
+
+        if (mounted && response.ok && data.success && Array.isArray(data.conversations)) {
+          const unread = data.conversations.filter((conversation) => conversation.hasUnread).length
+          setUnreadConversations(unread)
+        }
+      } catch {
+        if (mounted) {
+          setUnreadConversations(0)
+        }
+      }
+    }
+
+    loadUnreadCount()
+    const intervalId = setInterval(loadUnreadCount, 5000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
   }, [])
 
   return (
@@ -102,7 +175,19 @@ const DesktopLayout = ({ children, activePath }) => {
                       : 'text-gray-500 hover:bg-gray-100'
                   }`}
                 >
-                  {item.label}
+                  <span className="flex items-center justify-between">
+                    <span>{item.label}</span>
+                    {item.path === '/chat-room' && unreadRooms > 0 && (
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${isActive ? 'bg-white text-primary' : 'bg-red-100 text-red-600'}`}>
+                        {unreadRooms}
+                      </span>
+                    )}
+                    {item.path === '/conversations' && unreadConversations > 0 && (
+                      <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${isActive ? 'bg-white text-primary' : 'bg-red-100 text-red-600'}`}>
+                        {unreadConversations}
+                      </span>
+                    )}
+                  </span>
                 </button>
               )
             })}
@@ -164,7 +249,7 @@ const DesktopLayout = ({ children, activePath }) => {
                   </button>
                   <div className="border-t border-gray-100 my-1"></div>
                   <button
-                    onClick={() => { logout(); setProfileMenuOpen(false) }}
+                    onClick={() => { logout(); setProfileMenuOpen(false); navigate('/login') }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={18} className="text-red-500" />
@@ -177,7 +262,7 @@ const DesktopLayout = ({ children, activePath }) => {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto">
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto pb-24 lg:pb-6">
           {children}
         </div>
       </div>

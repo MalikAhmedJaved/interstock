@@ -3,19 +3,28 @@ import { useNavigate } from 'react-router-dom'
 import { BookOpen, Clock, Trophy, ArrowLeft } from 'lucide-react'
 import Button from '../components/Button'
 import { getQuizzesWithDuration } from '../data/quizzesData'
+import { API_ENDPOINTS } from '../config/api'
 
 const QuizHomePage = () => {
   const navigate = useNavigate()
   const [attemptedQuizzes, setAttemptedQuizzes] = useState([])
   const [latestAttempt, setLatestAttempt] = useState(null)
+  const [uploadedQuizzes, setUploadedQuizzes] = useState([])
 
   // Use shared quizzes data
-  const allQuizzes = getQuizzesWithDuration().map(quiz => ({
+  const staticQuizzes = getQuizzesWithDuration().map(quiz => ({
     id: quiz.id,
     title: quiz.title,
     questions: quiz.questions,
     time: quiz.duration,
+    deadline: quiz.deadline,
+    rawDuration: quiz.duration,
+    description: quiz.description,
+    subject: quiz.subject,
+    isRemote: false,
   }))
+
+  const allQuizzes = [...uploadedQuizzes, ...staticQuizzes]
 
   useEffect(() => {
     // Load attempted quizzes from localStorage
@@ -31,17 +40,58 @@ const QuizHomePage = () => {
     }
   }, [])
 
+  useEffect(() => {
+    let mounted = true
+
+    const loadQuizzes = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.STUDENT.QUIZZES)
+        const data = await response.json()
+
+        if (mounted && data.success && Array.isArray(data.quizzes)) {
+          const mapped = data.quizzes.map((item) => ({
+            id: `remote-${item._id}`,
+            title: item.title,
+            questions: item.questions || 10,
+            time: item.duration || `${item.questions || 10} min`,
+            rawDuration: item.duration || `${item.questions || 10} min`,
+            deadline: item.deadline,
+            description: item.description || '',
+            subject: item.subject,
+            teacherName: item.teacherName,
+            isRemote: true,
+            originalId: item._id,
+          }))
+          setUploadedQuizzes(mapped)
+        }
+      } catch {
+        if (mounted) {
+          setUploadedQuizzes([])
+        }
+      }
+    }
+
+    loadQuizzes()
+    const intervalId = setInterval(loadQuizzes, 15000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
+
   const isQuizAttempted = (quizId) => {
+    if (String(quizId).startsWith('remote-')) return false
     return attemptedQuizzes.some(attempt => attempt.quizId === quizId)
   }
 
   const getQuizAttempt = (quizId) => {
+    if (String(quizId).startsWith('remote-')) return null
     return attemptedQuizzes.find(attempt => attempt.quizId === quizId)
   }
 
   const handleQuizClick = (quiz) => {
-    // Navigate to quiz detail page
-    navigate(`/quiz/${quiz.id}`)
+    navigate(`/quiz/${quiz.id}`, { state: { quiz } })
   }
 
   const handleViewResults = (e, quiz, attempt) => {
@@ -111,6 +161,9 @@ const QuizHomePage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">{quiz.title}</h3>
+                    {quiz.teacherName && (
+                      <p className="text-xs text-primary font-medium mt-0.5">Uploaded by {quiz.teacherName}</p>
+                    )}
                     <div className="flex items-center gap-4 mt-1">
                       <div className="flex items-center gap-1 text-text-secondary-light text-sm">
                         <BookOpen size={14} />
@@ -134,7 +187,7 @@ const QuizHomePage = () => {
                 className="w-full btn-primary text-sm py-2"
                 onClick={attempted && attempt ? (e) => handleViewResults(e, quiz, attempt) : undefined}
               >
-                {attempted ? 'View Results' : 'Start Quiz'}
+                {quiz.isRemote ? 'View Quiz' : attempted ? 'View Results' : 'Start Quiz'}
               </button>
               {attempted && attempt && (
                 <div className="mt-2 text-xs text-text-secondary-light text-center">

@@ -4,6 +4,7 @@ import { FileText, Edit2, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/Button'
 import TextField from '../components/TextField'
+import { API_ENDPOINTS } from '../config/api'
 
 const NewNotesPage = () => {
   const navigate = useNavigate()
@@ -13,11 +14,9 @@ const NewNotesPage = () => {
   const [content, setContent] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  
-  // Check if viewing an existing note
+
   const existingNote = location.state?.note
   const isViewingNote = !!existingNote
-  const isDefaultNote = existingNote && (existingNote.id === 1 || existingNote.id === 2)
 
   useEffect(() => {
     if (existingNote) {
@@ -31,105 +30,105 @@ const NewNotesPage = () => {
     }
   }, [existingNote, location.state?.isEditing])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    // Get existing saved notes
-    const savedNotes = localStorage.getItem('userNotes')
-    const parsedSavedNotes = savedNotes ? JSON.parse(savedNotes) : []
-    
+
     const userName = user?.name || 'Unknown User'
-    
-    if (isEditing && existingNote) {
-      if (isDefaultNote) {
-        // For default notes, we can't edit them directly, but we can create a new note
-        // Or we could update them if stored in localStorage
-        // For now, let's allow editing default notes by updating them in a special way
-        // Actually, default notes are hardcoded, so we'll just update the saved version if it exists
-        const noteIndex = parsedSavedNotes.findIndex(note => note.id === existingNote.id)
-        if (noteIndex !== -1) {
-          parsedSavedNotes[noteIndex] = {
-            ...parsedSavedNotes[noteIndex],
-            title: title,
-            content: content,
-            preview: content.length > 50 ? content.substring(0, 50) + '...' : content,
-            username: userName
-          }
-        } else {
-          // If default note doesn't exist in saved notes, add it
-          parsedSavedNotes.push({
-            ...existingNote,
-            title: title,
-            content: content,
-            preview: content.length > 50 ? content.substring(0, 50) + '...' : content,
-            username: userName
-          })
+    const userId = user?.id || user?._id || ''
+
+    if (!userId) {
+      alert('Unable to identify logged in user')
+      return
+    }
+
+    try {
+      if (isEditing && existingNote?.isRemote) {
+        if (!existingNote.canEdit) {
+          alert('You can only edit your own notes')
+          return
         }
-        localStorage.setItem('userNotes', JSON.stringify(parsedSavedNotes))
+
+        const response = await fetch(`${API_ENDPOINTS.STUDENT.NOTES}/${existingNote.remoteId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            userId,
+          }),
+        })
+
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to update note')
+        }
+
         navigate('/my-note')
-      } else {
-        // Update existing user-created note
-        const noteIndex = parsedSavedNotes.findIndex(note => note.id === existingNote.id)
-        if (noteIndex !== -1) {
-          parsedSavedNotes[noteIndex] = {
-            ...parsedSavedNotes[noteIndex],
-            title: title,
-            content: content,
-            preview: content.length > 50 ? content.substring(0, 50) + '...' : content,
-            username: userName
-          }
-          localStorage.setItem('userNotes', JSON.stringify(parsedSavedNotes))
-          navigate('/my-note')
+        return
+      }
+
+      if (!isViewingNote) {
+        const response = await fetch(API_ENDPOINTS.STUDENT.NOTES, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            username: userName,
+            userId,
+          }),
+        })
+
+        const data = await response.json()
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || 'Failed to save note')
         }
+
+        navigate('/my-note')
+        return
       }
-    } else {
-      // Create new note
-      const newNote = {
-        id: Date.now(), // Use timestamp as unique ID
-        title: title,
-        content: content,
-        date: new Date().toISOString().split('T')[0], // Current date in YYYY-MM-DD format
-        preview: content.length > 50 ? content.substring(0, 50) + '...' : content, // First 50 characters as preview
-        username: userName
+    } catch (error) {
+      alert(error.message || 'Failed to save note')
+    }
+  }
+
+  const handleDelete = async () => {
+    const userId = user?.id || user?._id || ''
+
+    if (!existingNote?.isRemote) {
+      alert('Only backend notes are supported now')
+      return
+    }
+
+    if (!existingNote?.canEdit) {
+      alert('You can only delete your own notes')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_ENDPOINTS.STUDENT.NOTES}/${existingNote.remoteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      })
+
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete note')
       }
-      
-      // Add new note to saved notes
-      parsedSavedNotes.push(newNote)
-      
-      // Save to localStorage
-      localStorage.setItem('userNotes', JSON.stringify(parsedSavedNotes))
-      
-      // Navigate back to notes list
+
       navigate('/my-note')
+    } catch (error) {
+      alert(error.message || 'Failed to delete note')
     }
   }
 
-  const handleDelete = () => {
-    if (isDefaultNote) {
-      // For default notes, store the deleted ID in localStorage
-      const deletedDefaultNotes = localStorage.getItem('deletedDefaultNotes')
-      const parsedDeletedNotes = deletedDefaultNotes ? JSON.parse(deletedDefaultNotes) : []
-      if (!parsedDeletedNotes.includes(existingNote.id)) {
-        parsedDeletedNotes.push(existingNote.id)
-        localStorage.setItem('deletedDefaultNotes', JSON.stringify(parsedDeletedNotes))
-      }
-    } else {
-      // Get existing saved notes
-      const savedNotes = localStorage.getItem('userNotes')
-      const parsedSavedNotes = savedNotes ? JSON.parse(savedNotes) : []
-      
-      // Remove the note
-      const filteredNotes = parsedSavedNotes.filter(note => note.id !== existingNote.id)
-      
-      // Save to localStorage
-      localStorage.setItem('userNotes', JSON.stringify(filteredNotes))
-    }
-    
-    // Navigate back to notes list
-    navigate('/my-note')
-  }
-
-  // If editing, show form
   if (isViewingNote && isEditing) {
     return (
       <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
@@ -176,10 +175,9 @@ const NewNotesPage = () => {
     )
   }
 
-  // If viewing an existing note, show details
   if (isViewingNote) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="text-text-primary-dark">
             ← Back
@@ -204,20 +202,24 @@ const NewNotesPage = () => {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                    title="Edit note"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                    title="Delete note"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  {existingNote.canEdit && (
+                    <>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        title="Edit note"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                        title="Delete note"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -226,34 +228,40 @@ const NewNotesPage = () => {
           <div className="border-t border-gray-200 pt-6">
             <div className="text-text-primary-dark leading-relaxed">
               {existingNote.content.split('\n').map((line, index) => {
-                // Format markdown headers
                 if (line.startsWith('# ')) {
                   return <h1 key={index} className="text-2xl font-bold mb-4 mt-6 first:mt-0">{line.substring(2)}</h1>
-                } else if (line.startsWith('## ')) {
-                  return <h2 key={index} className="text-xl font-semibold mb-3 mt-5 first:mt-0">{line.substring(3)}</h2>
-                } else if (line.startsWith('### ')) {
-                  return <h3 key={index} className="text-lg font-semibold mb-2 mt-4 first:mt-0">{line.substring(4)}</h3>
-                } else if (line.startsWith('- ') || line.startsWith('* ')) {
-                  return <div key={index} className="ml-4 mb-1 flex items-start">
-                    <span className="mr-2">•</span>
-                    <span>{line.substring(2)}</span>
-                  </div>
-                } else if (line.trim() === '') {
-                  return <div key={index} className="h-3" />
-                } else if (line.match(/^\d+\.\s/)) {
-                  return <div key={index} className="ml-4 mb-1 flex items-start">
-                    <span className="mr-2 font-semibold">{line.match(/^\d+\./)[0]}</span>
-                    <span>{line.replace(/^\d+\.\s/, '')}</span>
-                  </div>
-                } else {
-                  return <p key={index} className="mb-3">{line}</p>
                 }
+                if (line.startsWith('## ')) {
+                  return <h2 key={index} className="text-xl font-semibold mb-3 mt-5 first:mt-0">{line.substring(3)}</h2>
+                }
+                if (line.startsWith('### ')) {
+                  return <h3 key={index} className="text-lg font-semibold mb-2 mt-4 first:mt-0">{line.substring(4)}</h3>
+                }
+                if (line.startsWith('- ') || line.startsWith('* ')) {
+                  return (
+                    <div key={index} className="ml-4 mb-1 flex items-start">
+                      <span className="mr-2">•</span>
+                      <span>{line.substring(2)}</span>
+                    </div>
+                  )
+                }
+                if (line.trim() === '') {
+                  return <div key={index} className="h-3" />
+                }
+                if (line.match(/^\d+\.\s/)) {
+                  return (
+                    <div key={index} className="ml-4 mb-1 flex items-start">
+                      <span className="mr-2 font-semibold">{line.match(/^\d+\./)[0]}</span>
+                      <span>{line.replace(/^\d+\.\s/, '')}</span>
+                    </div>
+                  )
+                }
+                return <p key={index} className="mb-3">{line}</p>
               })}
             </div>
           </div>
         </div>
 
-        {/* Delete Confirmation Dialog */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-xl p-6 max-w-md w-full space-y-4">
@@ -284,7 +292,6 @@ const NewNotesPage = () => {
     )
   }
 
-  // Otherwise, show form to create new note
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center gap-4">
@@ -326,5 +333,3 @@ const NewNotesPage = () => {
 }
 
 export default NewNotesPage
-
-

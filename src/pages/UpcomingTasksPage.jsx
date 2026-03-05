@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { FileText, BookOpen, Clock, Calendar, Trophy } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { getQuizzesWithDuration } from '../data/quizzesData'
+import { assignmentsData } from '../data/assignmentsData'
+import { API_ENDPOINTS } from '../config/api'
 
 const UpcomingTasksPage = () => {
   const navigate = useNavigate()
@@ -10,6 +12,8 @@ const UpcomingTasksPage = () => {
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState('assignments') // 'assignments' or 'quizzes'
   const [attemptedQuizzes, setAttemptedQuizzes] = useState([])
+  const [uploadedAssignments, setUploadedAssignments] = useState([])
+  const [uploadedQuizzes, setUploadedQuizzes] = useState([])
   const isActive = user?.isActive !== false // Default to true if not set
 
   useEffect(() => {
@@ -27,39 +31,72 @@ const UpcomingTasksPage = () => {
   const showTabs = !searchParams.get('tab') // Show tabs only if no specific tab is requested
   const requestedTab = searchParams.get('tab')
 
-  // Sample data - in real app, this would come from an API
-  const upcomingAssignments = [
-    {
-      id: 1,
-      title: 'Stock Market Analysis Report',
-      deadline: '2024-11-28',
-      time: '11:59 PM',
-      subject: 'Trading Fundamentals',
-      status: 'upcoming',
-      description: 'Analyze the current stock market trends and provide a comprehensive report on your findings. Include market indicators, sector performance, and future predictions.'
-    },
-    {
-      id: 2,
-      title: 'Trading Strategy Essay',
-      deadline: '2025-12-05',
-      time: '11:59 PM',
-      subject: 'Advanced Trading',
-      status: 'upcoming',
-      description: 'Write a detailed essay on different trading strategies, their pros and cons, and when to use each strategy. Include real-world examples.'
-    },
-    {
-      id: 3,
-      title: 'Portfolio Management Assignment',
-      deadline: '2025-12-05',
-      time: '11:59 PM',
-      subject: 'Portfolio Management',
-      status: 'upcoming',
-      description: 'Create a portfolio management plan for a hypothetical client. Include risk assessment, asset allocation, and rebalancing strategies.'
-    },
-  ]
+  useEffect(() => {
+    let mounted = true
 
-  // Use shared quizzes data
-  const upcomingQuizzes = getQuizzesWithDuration()
+    const loadRemoteData = async () => {
+      try {
+        const [assignmentRes, quizRes] = await Promise.all([
+          fetch(API_ENDPOINTS.STUDENT.ASSIGNMENTS),
+          fetch(API_ENDPOINTS.STUDENT.QUIZZES),
+        ])
+
+        const assignmentData = await assignmentRes.json()
+        const quizData = await quizRes.json()
+
+        if (mounted && assignmentData.success && Array.isArray(assignmentData.assignments)) {
+          setUploadedAssignments(
+            assignmentData.assignments.map((item) => ({
+              id: `remote-${item._id}`,
+              title: item.title,
+              deadline: item.deadline,
+              time: item.time || '11:59 PM',
+              subject: item.subject,
+              status: 'upcoming',
+              description: item.description || '',
+              teacherName: item.teacherName,
+            }))
+          )
+        }
+
+        if (mounted && quizData.success && Array.isArray(quizData.quizzes)) {
+          setUploadedQuizzes(
+            quizData.quizzes.map((item) => ({
+              id: `remote-${item._id}`,
+              title: item.title,
+              deadline: item.deadline,
+              time: item.time || '10:00 AM',
+              questions: item.questions || 10,
+              subject: item.subject,
+              status: 'upcoming',
+              description: item.description || '',
+              duration: item.duration || `${item.questions || 10} min`,
+              teacherName: item.teacherName,
+            }))
+          )
+        }
+      } catch {
+        if (mounted) {
+          setUploadedAssignments([])
+          setUploadedQuizzes([])
+        }
+      }
+    }
+
+    loadRemoteData()
+    const intervalId = setInterval(loadRemoteData, 15000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
+
+  const upcomingAssignments = [...uploadedAssignments, ...assignmentsData]
+  const upcomingQuizzes = [
+    ...uploadedQuizzes,
+    ...getQuizzesWithDuration(),
+  ]
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -106,7 +143,7 @@ const UpcomingTasksPage = () => {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/home')} className="text-text-primary-dark">
           ← Back
@@ -169,7 +206,7 @@ const UpcomingTasksPage = () => {
               return (
                 <div
                   key={assignment.id}
-                  onClick={() => navigate(`/assignment/${assignment.id}`)}
+                  onClick={() => navigate(`/assignment/${assignment.id}`, { state: { assignment } })}
                   className="card p-4 hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <div className="flex items-start gap-4">
@@ -179,6 +216,9 @@ const UpcomingTasksPage = () => {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg mb-1">{assignment.title}</h3>
                       <p className="text-sm text-text-secondary-light mb-3">{assignment.subject}</p>
+                      {assignment.teacherName && (
+                        <p className="text-xs text-primary font-medium mb-2">Uploaded by {assignment.teacherName}</p>
+                      )}
                       <div className="flex items-center gap-4 flex-wrap">
                         <div className="flex items-center gap-2 text-text-secondary-light text-sm">
                           <Calendar size={16} />
@@ -225,7 +265,7 @@ const UpcomingTasksPage = () => {
               return (
                 <div
                   key={quiz.id}
-                  onClick={() => navigate(`/quiz/${quiz.id}`)}
+                  onClick={() => navigate(`/quiz/${quiz.id}`, { state: { quiz } })}
                   className="card p-4 hover:shadow-md transition-shadow cursor-pointer"
                 >
                   <div className="flex items-start gap-4">
@@ -235,6 +275,9 @@ const UpcomingTasksPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-1">
                         <h3 className="font-semibold text-lg">{quiz.title}</h3>
+                        {quiz.teacherName && (
+                          <p className="text-xs text-primary font-medium">Uploaded by {quiz.teacherName}</p>
+                        )}
                         {isAttempted && (
                           <div className="flex items-center gap-1 text-stock-green ml-2">
                             <Trophy size={16} />

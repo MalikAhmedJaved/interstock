@@ -12,6 +12,9 @@ app.use(express.urlencoded({ extended: true }))
 
 // Routes
 app.use('/api/auth', require('./routes/auth'))
+app.use('/api/student', require('./routes/student'))
+app.use('/api/chat', require('./routes/chat'))
+app.use('/api/chatbot', require('./routes/chatbot'))
 
 // Health check
 app.get('/api/health', (req, res) => {

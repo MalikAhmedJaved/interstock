@@ -19,7 +19,7 @@ const HomePage = () => {
   ]
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 pb-20 sm:pb-24 lg:pb-8">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 space-y-4 sm:space-y-6 pb-24">
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <div>

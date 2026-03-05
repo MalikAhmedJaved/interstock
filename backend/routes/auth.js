@@ -4,9 +4,37 @@ const User = require('../models/User')
 
 const router = express.Router()
 
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+
+const nameRegex = /^[A-Za-z\s.'-]+$/
+const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+
+const validateName = (name = '') => {
+  const trimmedName = name.trim()
+  if (!trimmedName) {
+    return 'Please provide name, email, and password'
+  }
+  if (!nameRegex.test(trimmedName)) {
+    return 'Full name must contain letters only. Numbers are not allowed.'
+  }
+  if (trimmedName.length < 2) {
+    return 'Full name must be at least 2 characters'
+  }
+  return null
+}
+
+const validateStrongPassword = (password = '', fieldLabel = 'Password') => {
+  if (!strongPasswordRegex.test(password)) {
+    return `${fieldLabel} must be at least 8 characters and include uppercase, lowercase, and numbers`
+  }
+  return null
+}
+
+const getTokenFromRequest = (req) => req.headers.authorization?.split(' ')[1]
+
 // Generate JWT token
 const generateToken = (userId) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production', {
+  return jwt.sign({ userId }, JWT_SECRET, {
     expiresIn: '30d'
   })
 }
@@ -16,11 +44,26 @@ router.post('/signup', async (req, res) => {
   try {
     const { name, email, password, phone } = req.body
 
-    // Validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Please provide name, email, and password'
+      })
+    }
+
+    const nameError = validateName(name)
+    if (nameError) {
+      return res.status(400).json({
+        success: false,
+        message: nameError
+      })
+    }
+
+    const passwordError = validateStrongPassword(password)
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError
       })
     }
 
@@ -33,17 +76,9 @@ router.post('/signup', async (req, res) => {
       })
     }
 
-    // Validate password length
-    if (password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 8 characters'
-      })
-    }
-
     // Create new user
     const user = new User({
-      name,
+      name: name.trim(),
       email: email.toLowerCase(),
       password,
       phone: phone || '',
@@ -145,7 +180,7 @@ router.get('/me', async (req, res) => {
       })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production')
+    const decoded = jwt.verify(token, JWT_SECRET)
     const user = await User.findById(decoded.userId)
 
     if (!user) {
@@ -177,7 +212,7 @@ router.get('/me', async (req, res) => {
 // Change Password (protected route - requires token)
 router.put('/change-password', async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1] // Bearer <token>
+    const token = getTokenFromRequest(req)
 
     if (!token) {
       return res.status(401).json({
@@ -186,7 +221,7 @@ router.put('/change-password', async (req, res) => {
       })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production')
+    const decoded = jwt.verify(token, JWT_SECRET)
     const user = await User.findById(decoded.userId)
 
     if (!user) {
@@ -206,11 +241,11 @@ router.put('/change-password', async (req, res) => {
       })
     }
 
-    // Validate new password length
-    if (newPassword.length < 8) {
+    const passwordError = validateStrongPassword(newPassword, 'New password')
+    if (passwordError) {
       return res.status(400).json({
         success: false,
-        message: 'New password must be at least 8 characters'
+        message: passwordError
       })
     }
 
