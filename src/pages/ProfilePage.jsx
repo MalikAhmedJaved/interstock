@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Bell, User, Lock, FileText, Shield, FileCheck, HelpCircle, 
-  MessageCircle, Trash2, ChevronRight, Upload, Camera, CheckCircle
+  MessageCircle, Trash2, ChevronRight, Upload, Camera, CheckCircle, X
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -10,6 +10,7 @@ const ProfilePage = () => {
   const navigate = useNavigate()
   const { logout, user, deactivateAccount, activateAccount } = useAuth()
   const [profileImage, setProfileImage] = useState(null)
+  const [showImagePreview, setShowImagePreview] = useState(false)
   const userName = user?.name || 'User'
   const userEmail = user?.email || ''
   const isActive = user?.isActive !== false // Default to true if not set
@@ -56,7 +57,7 @@ const ProfilePage = () => {
     { icon: FileCheck, title: 'Terms & Conditions', onClick: () => navigate('/terms-and-conditions') },
     { icon: HelpCircle, title: 'Help Center', onClick: () => navigate('/help-center') },
     { icon: MessageCircle, title: 'FAQs', onClick: () => navigate('/faqs-page') },
-    { icon: MessageCircle, title: 'Contact Us', onClick: () => navigate('/contact-form') },
+
     { 
       icon: isActive ? Trash2 : CheckCircle, 
       title: isActive ? 'Deactivate My Account' : 'Activate Account', 
@@ -73,32 +74,58 @@ const ProfilePage = () => {
       {/* Profile Header */}
       <div className="flex flex-col items-center">
         <div className="relative mb-3 sm:mb-4">
-          <label className="cursor-pointer block">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20 hover:border-primary/40 transition-colors">
+          {/* Profile image - click to preview */}
+          <button
+            onClick={() => profileImage && setShowImagePreview(true)}
+            className="block"
+          >
+            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20 transition-colors ${profileImage ? 'hover:border-primary/40 cursor-pointer' : ''}`}>
               {profileImage ? (
                 <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <User size={40} className="text-gray-400 sm:w-12 sm:h-12" />
               )}
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-              id="profile-image-input"
-            />
-          </label>
+          </button>
+          {/* Camera icon - click to upload/capture */}
           <label 
             htmlFor="profile-image-input"
             className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors cursor-pointer"
           >
             <Camera size={16} />
           </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+            id="profile-image-input"
+          />
         </div>
         <h3 className="text-lg sm:text-xl font-semibold">{userName}</h3>
         <p className="text-sm sm:text-base text-text-secondary-light">{userEmail}</p>
       </div>
+
+      {/* Full-screen Image Preview Modal */}
+      {showImagePreview && profileImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setShowImagePreview(false)}
+        >
+          <button
+            onClick={() => setShowImagePreview(false)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+          >
+            <X size={24} className="text-white" />
+          </button>
+          <img
+            src={profileImage}
+            alt="Profile Preview"
+            className="max-w-full max-h-full rounded-2xl object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* Profile Items */}
       <div className="space-y-2 lg:space-y-3 max-w-2xl lg:mx-auto">

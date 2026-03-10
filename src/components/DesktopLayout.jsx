@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Bell, RefreshCw, Menu, X, Settings, LogOut, User } from 'lucide-react'
+import { Bell, Menu, X, Settings, LogOut, User } from 'lucide-react'
 import { API_ENDPOINTS } from '../config/api'
 
 // Sidebar navigation items
@@ -26,6 +26,7 @@ const DesktopLayout = ({ children, activePath }) => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [unreadConversations, setUnreadConversations] = useState(0)
   const [unreadRooms, setUnreadRooms] = useState(0)
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
   const profileMenuRef = useRef(null)
   const currentPath = activePath || location.pathname
 
@@ -109,8 +110,35 @@ const DesktopLayout = ({ children, activePath }) => {
     }
   }, [])
 
+  useEffect(() => {
+    let mounted = true
+
+    const loadNotificationCount = async () => {
+      try {
+        const response = await fetch(API_ENDPOINTS.STUDENT.NOTIFICATIONS)
+        const data = await response.json()
+
+        if (mounted && data.success && Array.isArray(data.notifications)) {
+          setUnreadNotifications(data.notifications.length)
+        }
+      } catch {
+        if (mounted) {
+          setUnreadNotifications(0)
+        }
+      }
+    }
+
+    loadNotificationCount()
+    const intervalId = setInterval(loadNotificationCount, 15000)
+
+    return () => {
+      mounted = false
+      clearInterval(intervalId)
+    }
+  }, [])
+
   return (
-    <div className="flex min-h-screen bg-background-light">
+    <div className="flex h-screen overflow-hidden bg-background-light">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -213,15 +241,14 @@ const DesktopLayout = ({ children, activePath }) => {
           <h1 className="text-xl sm:text-2xl font-semibold font-inter text-black">InterStock</h1>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/60 flex items-center justify-center hover:bg-white/80 transition-colors">
-              <RefreshCw size={18} className="text-gray-600 sm:w-5 sm:h-5" />
-            </button>
             <button
               onClick={() => navigate('/notifications')}
               className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/60 flex items-center justify-center relative hover:bg-white/80 transition-colors"
             >
               <Bell size={18} className="text-gray-600 sm:w-5 sm:h-5" />
-              <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-2 h-2 bg-stock-red rounded-full"></span>
+              {unreadNotifications > 0 && (
+                <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 w-2 h-2 bg-stock-red rounded-full"></span>
+              )}
             </button>
             {/* Profile avatar with dropdown */}
             <div className="relative" ref={profileMenuRef}>
@@ -262,7 +289,7 @@ const DesktopLayout = ({ children, activePath }) => {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-y-auto pb-24 lg:pb-6">
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 overflow-y-auto pb-28">
           {children}
         </div>
       </div>

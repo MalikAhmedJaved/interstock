@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import MainLayout from '../components/MainLayout'
+import DesktopLayout from '../components/DesktopLayout'
 
 // Auth Pages
 import OnboardingPage from '../pages/OnboardingPage'
@@ -83,7 +84,7 @@ const AppRouter = () => {
       <Route path="/home" element={<MainLayout><HomePage /></MainLayout>} />
       <Route path="/learn" element={<ListingPage />} />
       <Route path="/listing" element={<ListingPage />} />
-      <Route path="/rank" element={<MainLayout><RankPage /></MainLayout>} />
+      <Route path="/rank" element={<DesktopLayout><RankPage /></DesktopLayout>} />
       <Route path="/profile" element={<MainLayout><ProfilePage /></MainLayout>} />
 
       {/* Quiz Routes */}
@@ -101,29 +102,29 @@ const AppRouter = () => {
       <Route path="/faqs-page" element={<FaqsPage />} />
       <Route path="/help-center" element={<HelpCenterPage />} />
       <Route path="/help-center-details" element={<HelpDetailPage />} />
-      <Route path="/my-note" element={<MyNotesPage />} />
-      <Route path="/my-note-details" element={<NewNotesPage />} />
+      <Route path="/my-note" element={<DesktopLayout><MyNotesPage /></DesktopLayout>} />
+      <Route path="/my-note-details" element={<DesktopLayout activePath="/my-note"><NewNotesPage /></DesktopLayout>} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
 
       {/* Drawer Routes */}
-      <Route path="/achievements" element={<AchievementsPage />} />
-      <Route path="/achievement-details" element={<AchievementDetailsPage />} />
-      <Route path="/assignments" element={<AssignmentsPage />} />
-      <Route path="/submit-assignments" element={<SubmitAssignmentsPage />} />
-      <Route path="/assignment/:id" element={<AssignmentDetailPage />} />
-      <Route path="/upcoming-tasks" element={<UpcomingTasksPage />} />
-      <Route path="/chat-room" element={<ChatRoomsPage />} />
+      <Route path="/achievements" element={<DesktopLayout><AchievementsPage /></DesktopLayout>} />
+      <Route path="/achievement-details" element={<DesktopLayout activePath="/achievements"><AchievementDetailsPage /></DesktopLayout>} />
+      <Route path="/assignments" element={<DesktopLayout><AssignmentsPage /></DesktopLayout>} />
+      <Route path="/submit-assignments" element={<DesktopLayout activePath="/assignments"><SubmitAssignmentsPage /></DesktopLayout>} />
+      <Route path="/assignment/:id" element={<DesktopLayout activePath="/assignments"><AssignmentDetailPage /></DesktopLayout>} />
+      <Route path="/upcoming-tasks" element={<DesktopLayout><UpcomingTasksPage /></DesktopLayout>} />
+      <Route path="/chat-room" element={<DesktopLayout><ChatRoomsPage /></DesktopLayout>} />
       <Route path="/chat-room-details" element={<ChatRoomDetailsPage />} />
-      <Route path="/conversations" element={<ConversationsPage />} />
-      <Route path="/new-chat-page" element={<NewChatPage />} />
-      <Route path="/hall-of-fame" element={<HallOfFamePage />} />
-      <Route path="/study-materials" element={<StudyMaterialsPage />} />
-      <Route path="/teachers-page" element={<TeacherPage />} />
-      <Route path="/teacher-details" element={<TeacherDetailsPage />} />
+      <Route path="/conversations" element={<DesktopLayout><ConversationsPage /></DesktopLayout>} />
+      <Route path="/new-chat-page" element={<DesktopLayout activePath="/conversations"><NewChatPage /></DesktopLayout>} />
+      <Route path="/hall-of-fame" element={<DesktopLayout><HallOfFamePage /></DesktopLayout>} />
+      <Route path="/study-materials" element={<DesktopLayout><StudyMaterialsPage /></DesktopLayout>} />
+      <Route path="/teachers-page" element={<DesktopLayout><TeacherPage /></DesktopLayout>} />
+      <Route path="/teacher-details" element={<DesktopLayout><TeacherDetailsPage /></DesktopLayout>} />
 
       {/* Home Routes */}
-      <Route path="/notifications" element={<NotificationPage />} />
+      <Route path="/notifications" element={<DesktopLayout><NotificationPage /></DesktopLayout>} />
       <Route path="/chat-bots" element={<ChatBotPage />} />
 
       {/* Trading Routes */}

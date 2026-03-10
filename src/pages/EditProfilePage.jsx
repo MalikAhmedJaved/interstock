@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { User, Upload } from 'lucide-react'
+import { User, Camera, X } from 'lucide-react'
 import Button from '../components/Button'
 import TextField from '../components/TextField'
 
@@ -14,6 +14,7 @@ const EditProfilePage = () => {
     phone: '',
   })
   const [image, setImage] = useState(null)
+  const [showImagePreview, setShowImagePreview] = useState(false)
   const [loading, setLoading] = useState(false)
 
   // Load current user data
@@ -74,27 +75,58 @@ const EditProfilePage = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex justify-center">
-          <label className="cursor-pointer">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20">
+          <div className="relative">
+            {/* Image - click to preview */}
+            <button
+              type="button"
+              onClick={() => image && setShowImagePreview(true)}
+            >
+              <div className={`w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-primary/20 ${image ? 'hover:border-primary/40 cursor-pointer' : ''}`}>
                 {image ? (
                   <img src={image} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User size={48} className="text-gray-400" />
                 )}
               </div>
-              <div className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
-                <Upload size={16} />
-              </div>
-            </div>
+            </button>
+            {/* Camera icon - click to upload */}
+            <label
+              htmlFor="edit-profile-image-input"
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors"
+            >
+              <Camera size={16} />
+            </label>
             <input
               type="file"
               accept="image/*"
               onChange={handleImageChange}
               className="hidden"
+              id="edit-profile-image-input"
             />
-          </label>
+          </div>
         </div>
+
+        {/* Full-screen Image Preview Modal */}
+        {showImagePreview && image && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setShowImagePreview(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setShowImagePreview(false)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+            >
+              <X size={24} className="text-white" />
+            </button>
+            <img
+              src={image}
+              alt="Profile Preview"
+              className="max-w-full max-h-full rounded-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
 
         <TextField
           label="Full Name"

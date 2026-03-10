@@ -96,13 +96,8 @@ const AssignmentDetailPage = () => {
 
   if (!isActive) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="text-text-primary-dark">
-            ← Back
-          </button>
-          <h2 className="text-2xl font-bold font-orbitron">Account Deactivated</h2>
-        </div>
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold font-orbitron">Account Deactivated</h2>
         <div className="card p-6 text-center">
           <AlertCircle className="mx-auto mb-4 text-gray-400" size={48} />
           <p className="text-text-secondary-light">Your account is deactivated. Please activate your account to view assignments.</p>
@@ -113,25 +108,15 @@ const AssignmentDetailPage = () => {
 
   if (!assignment) {
     return (
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="text-text-primary-dark">
-            ← Back
-          </button>
-          <h2 className="text-2xl font-bold font-orbitron">Assignment Not Found</h2>
-        </div>
+      <div className="space-y-4 sm:space-y-6">
+        <h2 className="text-xl sm:text-2xl font-bold font-orbitron">Assignment Not Found</h2>
       </div>
     )
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6 pb-24">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-text-primary-dark">
-          ← Back
-        </button>
-        <h2 className="text-2xl font-bold font-orbitron">Assignment Details</h2>
-      </div>
+    <div className="space-y-4 sm:space-y-6">
+      <h2 className="text-xl sm:text-2xl font-bold font-orbitron">Assignment Details</h2>
 
       <div className="card p-6 space-y-6">
         {/* Assignment Header */}

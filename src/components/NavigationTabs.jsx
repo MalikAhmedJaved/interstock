@@ -12,11 +12,11 @@ const NavigationTabs = () => {
     { path: '/profile', icon: User, label: 'Profile' },
   ]
 
-  // Only show navigation on main pages
-  const mainPages = ['/home', '/learn', '/rank', '/profile']
-  const shouldShowNav = mainPages.includes(location.pathname)
+  // Hide navigation on auth/public pages and full-screen pages
+  const hiddenPages = ['/login', '/onboarding', '/register-email', '/chat-room-details', '/chat-bots']
+  const isHidden = hiddenPages.includes(location.pathname)
 
-  if (!shouldShowNav) {
+  if (isHidden) {
     return null
   }
 

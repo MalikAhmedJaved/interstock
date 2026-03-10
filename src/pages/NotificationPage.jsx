@@ -58,13 +58,8 @@ const NotificationPage = () => {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-text-primary-dark">
-          ← Back
-        </button>
-        <h2 className="text-2xl font-bold font-orbitron">Notifications</h2>
-      </div>
+    <div className="space-y-4 sm:space-y-6">
+      <h2 className="text-xl sm:text-2xl font-bold font-orbitron">Notifications</h2>
 
       {/* Notification Toggle */}
       <div className="card p-4 flex items-center justify-between">
