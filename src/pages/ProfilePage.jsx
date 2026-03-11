@@ -53,6 +53,9 @@ const ProfilePage = () => {
     { icon: User, title: 'Edit Profile', onClick: () => navigate('/edit-profile') },
     { icon: Lock, title: 'Change Password', onClick: () => navigate('/change-password') },
     { icon: FileText, title: 'My Notes', onClick: () => navigate('/my-note') },
+    { icon: Shield, title: 'Privacy Policy', onClick: () => navigate('/privacy-policy') },
+    { icon: FileCheck, title: 'Terms & Conditions', onClick: () => navigate('/terms-and-conditions') },
+    { icon: HelpCircle, title: 'Help Centre', onClick: () => navigate('/help-center') },
     { icon: MessageCircle, title: 'FAQs', onClick: () => navigate('/faqs-page') },
 
     { 
