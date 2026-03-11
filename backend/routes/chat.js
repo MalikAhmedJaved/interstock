@@ -12,11 +12,24 @@ const router = express.Router()
 router.use(authMiddleware)
 
 const formatTime = (dateValue) => {
+  if (!dateValue) return ''
   const date = new Date(dateValue)
-  return date.toLocaleTimeString('en-US', {
+  const now = new Date()
+  const diffMs = now - date
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  const timeStr = date.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
   })
+
+  const dateStr = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  })
+
+  return `${dateStr}, ${timeStr}`
 }
 
 router.get('/users', async (req, res) => {

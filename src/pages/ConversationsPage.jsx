@@ -92,13 +92,15 @@ const ConversationsPage = () => {
                 <MessageCircle size={24} className="text-gray-400" />
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{conv.name}</h3>
-                  {conv.hasUnread && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{conv.name}</h3>
+                    {conv.hasUnread && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                  </div>
+                  {conv.time && <span className="text-xs text-text-secondary-light whitespace-nowrap">{conv.time}</span>}
                 </div>
                 <p className="text-sm text-text-secondary-light">{conv.lastMessage}</p>
               </div>
-              <span className="text-xs text-text-secondary-light">{conv.time}</span>
             </div>
           </div>
         ))}

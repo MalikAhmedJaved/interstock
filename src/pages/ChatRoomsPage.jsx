@@ -119,7 +119,10 @@ const ChatRoomsPage = () => {
                 <MessageCircle className="text-primary" size={24} />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">{room.name}</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">{room.name}</h3>
+                  {room.time && <span className="text-xs text-text-secondary-light">{room.time}</span>}
+                </div>
                 <div className="flex items-center gap-2 mt-1 text-text-secondary-light text-sm">
                   <Users size={14} />
                   <span>{room.members} members</span>
